@@ -1,0 +1,200 @@
+package engine;
+
+import engine.enums.Key;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
+import utils.Log;
+
+import java.util.HashSet;
+import java.util.Set;
+import java.util.function.Consumer;
+import org.lwjgl.Version;
+import org.lwjgl.glfw.GLFWErrorCallback;
+import org.lwjgl.glfw.GLFWVidMode;
+import org.lwjgl.opengl.GL;
+import org.lwjgl.system.MemoryStack;
+
+import java.nio.IntBuffer;
+import java.util.ArrayList;
+
+import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.opengl.GL46.*;
+import static org.lwjgl.system.MemoryStack.stackPush;
+import static org.lwjgl.system.MemoryUtil.NULL;
+
+
+public class Engine {
+    private long window;
+    private int windowWidth, windowHeight;
+
+    private Matrix4f modelMatrix, viewMatrix, projectionMatrix;
+
+    private float deltaTime;
+    private float lastFrame;
+    
+    private int WORLD_VAO, WORLD_VBO;
+
+    private Shader WORLD_SHADER;
+
+    public Engine(int windowWidth, int windowHeight, String windowTitle){
+        this.windowWidth = windowWidth;
+        this.windowHeight = windowHeight;
+        
+        //////////////////////////////////////////////////////////////////////////////////////
+
+        Log.init();
+        Log.info("Initializing Logging...");
+        Log.debug("LWJGL Version: " + Version.getVersion());
+        Log.debug("GLFW Version: " + org.lwjgl.glfw.GLFW.glfwGetVersionString());
+        
+        //////////////////////////////////////////////////////////////////////////////////////
+        
+        Log.info("Initializing GLFW...");
+        GLFWErrorCallback.createPrint(System.err).set();
+        if (!glfwInit()) {
+            throw new IllegalStateException("Unable to initialize GLFW");
+        }
+        glfwDefaultWindowHints();
+        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+        window = glfwCreateWindow(windowWidth, windowHeight, windowTitle, NULL, NULL);
+        glfwMakeContextCurrent(window);
+
+        //////////////////////////////////////////////////////////////////////////////////////
+
+        Log.info("Setting GLFW window callbacks...");
+        glfwSetWindowSizeCallback(window, (window, width, height) -> {
+            this.windowWidth = width;
+            this.windowHeight = height;
+            projectionMatrix = getProjectionMatrix(this.windowWidth, this.windowHeight, 60, 100);
+        });
+        glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
+            if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) glfwSetWindowShouldClose(window, true);
+        });
+        
+        //////////////////////////////////////////////////////////////////////////////////////
+
+        Log.info("Initialize GLFW framebuffer...");
+        try ( MemoryStack stack = stackPush() ) {
+            IntBuffer pWidth = stack.mallocInt(1); // int*
+            IntBuffer pHeight = stack.mallocInt(1); // int*
+
+            // Get the window size passed to glfwCreateWindow
+            glfwGetWindowSize(window, pWidth, pHeight);
+
+            // Get the resolution of the primary monitor
+            GLFWVidMode vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+
+            // Center the window
+            assert vidmode != null;
+            glfwSetWindowPos(
+                    window,
+                    (vidmode.width() - pWidth.get(0)) / 2,
+                    (vidmode.height() - pHeight.get(0)) / 2
+            );
+        }
+        
+        //////////////////////////////////////////////////////////////////////////////////////
+
+        Log.info("Initializing GLFW OpenGL Context...");
+        glfwMakeContextCurrent(window);
+        glfwSwapInterval(1);
+        glfwShowWindow(window);
+
+        GL.createCapabilities();
+        glClearColor(0.0f,0.0f,0.0f, 0.0f);
+        glEnable(GL_DEPTH_TEST);
+        //glDepthFunc(GL_LEQUAL);
+        //glEnable(GL_CULL_FACE);
+        //glCullFace(GL_BACK);
+        //glFrontFace(GL_CW);
+
+
+        
+        float[] mesh = {
+                -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
+                0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,
+                0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f
+        };
+
+        WORLD_VAO = glGenVertexArrays();
+        WORLD_VBO = glGenBuffers();
+        //System.out.println("Generated VBO: " + VBO);
+        glBindBuffer(GL_ARRAY_BUFFER, WORLD_VBO);
+        glBufferData(GL_ARRAY_BUFFER, mesh, GL_DYNAMIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        
+        //////////////////////////////////////////////////////////////////////////////////////
+
+        Log.info("Initializing Shaders...");
+        WORLD_SHADER = new Shader(
+                "world.vert",
+                "world.frag"
+        );
+        
+        //////////////////////////////////////////////////////////////////////////////////////
+        
+        Log.info("Initializing Matrix...");
+
+        projectionMatrix = getProjectionMatrix(windowWidth, windowHeight, 60, 100);
+        modelMatrix = new Matrix4f();
+        viewMatrix = getViewMatrix(new Vector3f(0,0,0), new Vector3f(0,0,1));
+
+
+    }
+
+    public Matrix4f getViewMatrix(Vector3f position, Vector3f direction){
+        Vector3f front = direction.normalize();
+        Vector3f right = new Vector3f(front).cross(new Vector3f(0,1,0)).normalize();
+        Vector3f up = new Vector3f(right).cross(front).normalize();
+        return new Matrix4f().lookAt(position, new Vector3f(position).add(front), up);
+    }
+
+    public Matrix4f getProjectionMatrix(float width, float height, float fov, float viewdistance) {
+        return new Matrix4f().perspective((float) Math.toRadians(fov), width/height, 0.1f, viewdistance);
+    }
+    
+    public boolean render(Vector3f position, Vector3f direction){
+        if(glfwWindowShouldClose(window)) return false;
+
+        glClearColor(0.2f,0.3f,0.2f,1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        float currentFrame = (float) glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+
+        viewMatrix = getViewMatrix(position, direction);
+
+        //TODO: INPUT
+
+        WORLD_SHADER.use();
+        //WORLD_SHADER.setMatrix4f("projection", projectionMatrix);
+        //WORLD_SHADER.setMatrix4f("view", viewMatrix);
+        //WORLD_SHADER.setMatrix4f("model", modelMatrix);
+
+        glBindVertexArray(WORLD_VAO);
+        glBindBuffer(GL_ARRAY_BUFFER, WORLD_VBO);
+        glVertexAttribPointer(0, 3, GL_FLOAT, false, 24, 0);
+        glEnableVertexAttribArray(0); // Position
+        glVertexAttribPointer(1, 3, GL_FLOAT, false, 24, 12);
+        glEnableVertexAttribArray(1); // Color
+        glDrawArrays(GL_TRIANGLES, 0, 4);
+
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+        return true;
+    }
+
+    public void cleanup(){
+        Log.info("Cleaning up...");
+        WORLD_SHADER.delete();
+        glDeleteVertexArrays(WORLD_VAO);
+        glDeleteBuffers(WORLD_VBO);
+        glfwDestroyWindow(window);
+        glfwTerminate();
+    }
+
+    public void setKeyCallback(Consumer<Key[]> callback) {} //TODO: Implement this
+
+}
