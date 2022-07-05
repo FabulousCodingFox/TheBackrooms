@@ -5,8 +5,6 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import utils.Log;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.function.Consumer;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFWErrorCallback;
@@ -15,7 +13,6 @@ import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryStack;
 
 import java.nio.IntBuffer;
-import java.util.ArrayList;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL46.*;
@@ -24,7 +21,7 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 
 
 public class Engine {
-    private long window;
+    private final long window;
     private int windowWidth, windowHeight;
 
     private Matrix4f modelMatrix, viewMatrix, projectionMatrix;
@@ -35,6 +32,8 @@ public class Engine {
     private int WORLD_VAO, WORLD_VBO;
 
     private Shader WORLD_SHADER;
+
+    private Texture BACKROOMS_WALL_TEXTURE;
 
     public Engine(int windowWidth, int windowHeight, String windowTitle){
         this.windowWidth = windowWidth;
@@ -112,9 +111,12 @@ public class Engine {
 
         
         float[] mesh = {
-                -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
-                0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,
-                0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f
+                -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+                0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+                0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+                0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+                -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+                -0.5f, -0.5f, -0.5f,  0.0f, 0.0f
         };
 
         WORLD_VAO = glGenVertexArrays();
@@ -128,12 +130,19 @@ public class Engine {
 
         Log.info("Initializing Shaders...");
         WORLD_SHADER = new Shader(
-                "world.vert",
-                "world.frag"
+                "shader/world.vert",
+                "shader/world.frag"
         );
         
         //////////////////////////////////////////////////////////////////////////////////////
-        
+
+        Log.info("Initializing Textures...");
+        BACKROOMS_WALL_TEXTURE = new Texture("textures/wall.png");
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, BACKROOMS_WALL_TEXTURE.get());
+
+        //////////////////////////////////////////////////////////////////////////////////////
         Log.info("Initializing Matrix...");
 
         projectionMatrix = getProjectionMatrix(windowWidth, windowHeight, 60, 100);
@@ -169,17 +178,18 @@ public class Engine {
         //TODO: INPUT
 
         WORLD_SHADER.use();
+        WORLD_SHADER.setInt("WALL_TEXTURE", 0);
         //WORLD_SHADER.setMatrix4f("projection", projectionMatrix);
         //WORLD_SHADER.setMatrix4f("view", viewMatrix);
         //WORLD_SHADER.setMatrix4f("model", modelMatrix);
 
         glBindVertexArray(WORLD_VAO);
         glBindBuffer(GL_ARRAY_BUFFER, WORLD_VBO);
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, 24, 0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, false, 20, 0);
         glEnableVertexAttribArray(0); // Position
-        glVertexAttribPointer(1, 3, GL_FLOAT, false, 24, 12);
-        glEnableVertexAttribArray(1); // Color
-        glDrawArrays(GL_TRIANGLES, 0, 4);
+        glVertexAttribPointer(1, 2, GL_FLOAT, false, 20, 12);
+        glEnableVertexAttribArray(1); // Texture Coordinates
+        glDrawArrays(GL_TRIANGLES, 0, 6);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
