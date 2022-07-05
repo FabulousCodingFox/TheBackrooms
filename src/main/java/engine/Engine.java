@@ -33,7 +33,7 @@ public class Engine {
 
     private Shader WORLD_SHADER;
 
-    private Texture BACKROOMS_WALL_TEXTURE;
+    private Texture BACKROOMS_WALL_TEXTURE, BACKROOMS_WALL_TEXTURE_B;
 
     public Engine(int windowWidth, int windowHeight, String windowTitle){
         this.windowWidth = windowWidth;
@@ -138,9 +138,15 @@ public class Engine {
 
         Log.info("Initializing Textures...");
         BACKROOMS_WALL_TEXTURE = new Texture("textures/wall.png");
+        BACKROOMS_WALL_TEXTURE_B = new Texture("textures/wall_b.jpg");
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, BACKROOMS_WALL_TEXTURE.get());
+
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, BACKROOMS_WALL_TEXTURE_B.get());
+
+
 
         //////////////////////////////////////////////////////////////////////////////////////
         Log.info("Initializing Matrix...");

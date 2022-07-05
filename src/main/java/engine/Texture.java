@@ -36,11 +36,11 @@ public class Texture {
         IntBuffer y = BufferUtils.createIntBuffer(1);
         IntBuffer channels = BufferUtils.createIntBuffer(1);
         System.out.println(absolutePath);
-        ByteBuffer image = stbi_load(absolutePath, x, y, channels, STBI_rgb);
+        ByteBuffer image = stbi_load(absolutePath, x, y, channels, STBI_rgb_alpha);
         if (image == null) {
             throw new IllegalStateException("Could not decode image file ["+ absolutePath +"]: ["+ stbi_failure_reason() +"]");
         }
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x.get(), y.get(), 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, x.get(), y.get(), 0, GL_RGB, GL_UNSIGNED_BYTE, image);
         glGenerateMipmap(GL_TEXTURE_2D);
         stbi_image_free(image);
     }

@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>de.fabulousfox</groupId>
-    <artifactId>Backrooms</artifactId>
+    <artifactId>TheBackrooms</artifactId>
     <version>1.0</version>
     <build>
         <plugins>
