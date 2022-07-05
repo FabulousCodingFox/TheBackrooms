@@ -19,8 +19,8 @@ public class Texture {
         glBindTexture(GL_TEXTURE_2D, texture);
 
         // set the texture wrapping parameters
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
         // set texture filtering parameters
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -35,8 +35,7 @@ public class Texture {
         IntBuffer x = BufferUtils.createIntBuffer(1);
         IntBuffer y = BufferUtils.createIntBuffer(1);
         IntBuffer channels = BufferUtils.createIntBuffer(1);
-        System.out.println(absolutePath);
-        ByteBuffer image = stbi_load(absolutePath, x, y, channels, STBI_rgb_alpha);
+        ByteBuffer image = stbi_load(absolutePath, x, y, channels, STBI_rgb);
         if (image == null) {
             throw new IllegalStateException("Could not decode image file ["+ absolutePath +"]: ["+ stbi_failure_reason() +"]");
         }

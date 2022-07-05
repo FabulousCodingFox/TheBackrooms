@@ -146,16 +146,12 @@ public class Engine {
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, BACKROOMS_WALL_TEXTURE_B.get());
 
-
-
         //////////////////////////////////////////////////////////////////////////////////////
         Log.info("Initializing Matrix...");
 
         projectionMatrix = getProjectionMatrix(windowWidth, windowHeight, 60, 100);
         modelMatrix = new Matrix4f();
         viewMatrix = getViewMatrix(new Vector3f(0,0,0), new Vector3f(0,0,1));
-
-
     }
 
     public Matrix4f getViewMatrix(Vector3f position, Vector3f direction){
@@ -185,7 +181,7 @@ public class Engine {
 
         WORLD_SHADER.use();
         WORLD_SHADER.setInt("WALL_TEXTURE", 0);
-        //WORLD_SHADER.setMatrix4f("projection", projectionMatrix);
+        WORLD_SHADER.setMatrix4f("projection", projectionMatrix);
         //WORLD_SHADER.setMatrix4f("view", viewMatrix);
         //WORLD_SHADER.setMatrix4f("model", modelMatrix);
 
