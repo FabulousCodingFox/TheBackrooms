@@ -18,12 +18,12 @@ public class Client {
         playerLookAt = new Vector3f(0, 0, 1);
         playerRotation = 0d;
 
-        playerWalkSpeed = 0.1f;
-        playerSprintSpeed = 0.2f;
-        playerTurnSpeed = 0.1f;
-        playerCrouchSpeed = 0.05f;
+        playerWalkSpeed = 2f;
+        playerSprintSpeed = playerWalkSpeed * 2f;
+        playerTurnSpeed = 90f;
+        playerCrouchSpeed = playerWalkSpeed / 2f;
 
-        engine = new Engine(640,480, "The Backrooms");
+        engine = new Engine(1280,960, "The Backrooms");
 
         ArrayList<Chunk> chunks = new ArrayList<>();
         chunks.add(new Chunk());
@@ -32,6 +32,7 @@ public class Client {
 
         boolean running = true;
         while (running) {
+
 
             // Event Queue
             float deltaTime = engine.getFrameTime();
@@ -47,7 +48,7 @@ public class Client {
                 playerRotation += (keyTurnLeft ? -1 : 1) * playerTurnSpeed * deltaTime;
                 if(playerRotation >= 360) playerRotation -= 360;
                 if(playerRotation < 0) playerRotation += 360;
-                playerLookAt = new Vector3f((float) Math.sin(Math.toRadians(playerRotation)), 0, (float) Math.cos(Math.toRadians(playerRotation)));
+                playerLookAt = new Vector3f((float) Math.sin(-Math.toRadians(playerRotation)), 0, (float) Math.cos(-Math.toRadians(playerRotation)));
                 playerLookAt.normalize();
             }
 
