@@ -2,6 +2,7 @@ package engine;
 
 import engine.enums.Key;
 import org.joml.Matrix4f;
+import org.joml.Vector2f;
 import org.joml.Vector3f;
 import structures.Chunk;
 import utils.Log;
@@ -30,7 +31,7 @@ public class Engine {
 
     private float deltaTime;
     private float lastFrame;
-    
+
     private int VAO_WORLD, VAO_POST_QUAD, VBO_POST_QUAD;
 
     private int FRAMEBUFFER;
@@ -46,16 +47,16 @@ public class Engine {
         this.windowHeight = windowHeight;
 
         this.deltaTime = 0.0f;
-        
+
         //////////////////////////////////////////////////////////////////////////////////////
 
         Log.init();
         Log.info("Initializing Logging...");
         Log.debug("LWJGL Version: " + Version.getVersion());
         Log.debug("GLFW Version: " + org.lwjgl.glfw.GLFW.glfwGetVersionString());
-        
+
         //////////////////////////////////////////////////////////////////////////////////////
-        
+
         Log.info("Initializing GLFW...");
         GLFWErrorCallback.createPrint(System.err).set();
         if (!glfwInit()) {
@@ -99,7 +100,7 @@ public class Engine {
         glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
             if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) glfwSetWindowShouldClose(window, true);
         });
-        
+
         //////////////////////////////////////////////////////////////////////////////////////
 
         Log.info("Initialize GLFW framebuffer...");
@@ -121,7 +122,7 @@ public class Engine {
                     (vidmode.height() - pHeight.get(0)) / 2
             );
         }
-        
+
         //////////////////////////////////////////////////////////////////////////////////////
 
         Log.info("Initializing GLFW OpenGL Context...");
@@ -188,7 +189,7 @@ public class Engine {
                 "shader/post/default.vert",
                 "shader/post/default.frag"
         );
-        
+
         //////////////////////////////////////////////////////////////////////////////////////
 
         Log.info("Initializing Textures...");
@@ -221,7 +222,7 @@ public class Engine {
     public Matrix4f getProjectionMatrix(float width, float height, float fov, float viewdistance) {
         return new Matrix4f().perspective((float) Math.toRadians(fov), width/height, 0.1f, viewdistance);
     }
-    
+
     public boolean render(ArrayList<Chunk> chunks, Vector3f position, Vector3f direction){
         if(glfwWindowShouldClose(window)) return false;
 
@@ -268,6 +269,8 @@ public class Engine {
         glClear(GL_COLOR_BUFFER_BIT);
 
         SHADER_POST_DEFAULT.use();
+        SHADER_POST_DEFAULT.setVector2f("iResolution", new Vector2f(windowWidth, windowHeight));
+        SHADER_POST_DEFAULT.setFloat("iTime", currentFrame);
         glBindVertexArray(VAO_POST_QUAD);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, FRAMEBUFFER_COLORBUFFER);

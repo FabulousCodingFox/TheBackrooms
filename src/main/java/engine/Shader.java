@@ -1,6 +1,7 @@
 package engine;
 
 import org.joml.Matrix4f;
+import org.joml.Vector2f;
 import utils.FileUtils;
 
 import java.io.IOException;
@@ -89,6 +90,15 @@ public class Shader {
      */
     public void setMatrix4f(String name, Matrix4f value) {
         glUniformMatrix4fv(glGetUniformLocation(ID, name), false, value.get(new float[16]));
+    }
+
+    /*
+        * Sets the value of a uniform variable in the shader program.
+        * @param name The name of the uniform variable.
+        * @param value The value of the uniform variable.
+     */
+    public void setVector2f(String name, Vector2f value) {
+        glUniform2fv(glGetUniformLocation(ID, name),new float[]{value.x, value.y} );
     }
 
     /*
