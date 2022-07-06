@@ -27,20 +27,22 @@ public class Engine {
     private final long window;
     private int windowWidth, windowHeight;
 
-    private Matrix4f modelMatrix, viewMatrix, projectionMatrix;
+    private final Matrix4f modelMatrix;
+    private Matrix4f viewMatrix;
+    private Matrix4f projectionMatrix;
 
     private float deltaTime;
     private float lastFrame;
 
-    private int VAO_WORLD, VAO_POST_QUAD, VBO_POST_QUAD;
+    private final int VAO_WORLD, VAO_POST_QUAD, VBO_POST_QUAD;
 
     private int FRAMEBUFFER;
     private int FRAMEBUFFER_COLORBUFFER;
     private int FRAMEBUFFER_RENDERBUFFER1;
 
-    private Shader SHADER_WORLD_STATIC_DEFAULT, SHADER_POST_DEFAULT;
+    private final Shader SHADER_WORLD_STATIC_DEFAULT, SHADER_POST_DEFAULT;
 
-    private Texture BACKROOMS_WALL_TEXTURE, BACKROOMS_WALL_TEXTURE_B;
+    private final Texture TEXTURE_BACKROOMS_WALL, TEXTURE_BACKROOMS_FLOOR, TEXTURE_BACKROOMS_CEILING;
 
     public Engine(int windowWidth, int windowHeight, String windowTitle){
         this.windowWidth = windowWidth;
@@ -176,7 +178,6 @@ public class Engine {
             Log.severe("Framebuffer not initialized");
         }
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glBindTexture(GL_TEXTURE_2D, 0);
 
         //////////////////////////////////////////////////////////////////////////////////////
 
@@ -193,16 +194,9 @@ public class Engine {
         //////////////////////////////////////////////////////////////////////////////////////
 
         Log.info("Initializing Textures...");
-        BACKROOMS_WALL_TEXTURE = new Texture("textures/wall.png");
-        BACKROOMS_WALL_TEXTURE_B = new Texture("textures/wall_b.jpg");
-
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, BACKROOMS_WALL_TEXTURE.get());
-
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, BACKROOMS_WALL_TEXTURE_B.get());
-
-
+        TEXTURE_BACKROOMS_WALL = new Texture("textures/wall.png",GL_TEXTURE1 );
+        TEXTURE_BACKROOMS_CEILING = new Texture("textures/ceiling.png",GL_TEXTURE2 );
+        TEXTURE_BACKROOMS_FLOOR = new Texture("textures/carpet.png", GL_TEXTURE3);
 
         //////////////////////////////////////////////////////////////////////////////////////
         Log.info("Initializing Matrix...");
@@ -244,7 +238,8 @@ public class Engine {
 
         SHADER_WORLD_STATIC_DEFAULT.use();
         SHADER_WORLD_STATIC_DEFAULT.setInt("WALL_TEXTURE", 1);
-        SHADER_WORLD_STATIC_DEFAULT.setInt("WALL_TEXTURE_B", 2);
+        SHADER_WORLD_STATIC_DEFAULT.setInt("CEILING_TEXTURE", 3);
+        SHADER_WORLD_STATIC_DEFAULT.setInt("FLOOR_TEXTURE", 2);
         SHADER_WORLD_STATIC_DEFAULT.setMatrix4f("projection", projectionMatrix);
         SHADER_WORLD_STATIC_DEFAULT.setMatrix4f("view", viewMatrix);
         SHADER_WORLD_STATIC_DEFAULT.setMatrix4f("model", modelMatrix);
@@ -286,6 +281,9 @@ public class Engine {
     public void cleanup(){
         Log.info("Cleaning up...");
         SHADER_WORLD_STATIC_DEFAULT.delete();
+        glDeleteTextures(TEXTURE_BACKROOMS_WALL.get());
+        glDeleteTextures(TEXTURE_BACKROOMS_CEILING.get());
+        glDeleteTextures(TEXTURE_BACKROOMS_FLOOR.get());
         glDeleteVertexArrays(VAO_WORLD);
         glDeleteVertexArrays(VAO_POST_QUAD);
         glDeleteBuffers(VBO_POST_QUAD);

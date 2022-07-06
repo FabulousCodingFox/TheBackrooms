@@ -14,7 +14,8 @@ import static org.lwjgl.stb.STBImage.*;
 public class Texture {
     int texture;
 
-    public Texture(String path) {
+    public Texture(String path, int texChannel) {
+        glActiveTexture(texChannel);
         texture = glGenTextures();
         glBindTexture(GL_TEXTURE_2D, texture);
 

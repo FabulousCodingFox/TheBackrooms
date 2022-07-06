@@ -26,7 +26,8 @@ public class Client {
         engine = new Engine(1280,960, "The Backrooms");
 
         ArrayList<Chunk> chunks = new ArrayList<>();
-        chunks.add(new Chunk());
+        chunks.add(new Chunk(0,0));
+        chunks.get(0).generateTerrain();
         chunks.get(0).generateMesh();
 
 
