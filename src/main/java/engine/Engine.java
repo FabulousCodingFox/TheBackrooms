@@ -7,7 +7,7 @@ import structures.Chunk;
 import utils.Log;
 
 import java.util.ArrayList;
-import java.util.function.Consumer;
+
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
@@ -31,9 +31,13 @@ public class Engine {
     private float deltaTime;
     private float lastFrame;
     
-    private int WORLD_VAO;
+    private int VAO_WORLD, VAO_POST_QUAD, VBO_POST_QUAD;
 
-    private Shader WORLD_SHADER;
+    private int FRAMEBUFFER;
+    private int FRAMEBUFFER_COLORBUFFER;
+    private int FRAMEBUFFER_RENDERBUFFER1;
+
+    private Shader SHADER_WORLD_STATIC_DEFAULT, SHADER_POST_DEFAULT;
 
     private Texture BACKROOMS_WALL_TEXTURE, BACKROOMS_WALL_TEXTURE_B;
 
@@ -105,21 +109,62 @@ public class Engine {
         glfwShowWindow(window);
 
         GL.createCapabilities();
-        glClearColor(0.0f,0.0f,0.0f, 0.0f);
-        glEnable(GL_DEPTH_TEST);
-        //glDepthFunc(GL_LEQUAL);
-        //glEnable(GL_CULL_FACE);
-        //glCullFace(GL_BACK);
-        //glFrontFace(GL_CW);
 
-        WORLD_VAO = glGenVertexArrays();
+        VAO_WORLD = glGenVertexArrays();
+        glBindVertexArray(VAO_WORLD);
+
+        float[] quadVertices = {
+                -1.0f,  1.0f,  0.0f, 1.0f,
+                -1.0f, -1.0f,  0.0f, 0.0f,
+                1.0f, -1.0f,  1.0f, 0.0f,
+                -1.0f,  1.0f,  0.0f, 1.0f,
+                1.0f, -1.0f,  1.0f, 0.0f,
+                1.0f,  1.0f,  1.0f, 1.0f
+        };
+        VAO_POST_QUAD = glGenVertexArrays();
+        VBO_POST_QUAD = glGenBuffers();
+        glBindVertexArray(VAO_POST_QUAD);
+        glBindBuffer(GL_ARRAY_BUFFER, VBO_POST_QUAD);
+        glBufferData(GL_ARRAY_BUFFER, quadVertices, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 2, GL_FLOAT, false, 16, 0);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 2, GL_FLOAT, false, 16, 8);
+
+        Log.info("Ititializing Framebuffer");
+
+        FRAMEBUFFER = glGenFramebuffers();
+        glBindFramebuffer(GL_FRAMEBUFFER, FRAMEBUFFER);
+
+        FRAMEBUFFER_COLORBUFFER = glGenTextures();
+        glBindTexture(GL_TEXTURE_2D, FRAMEBUFFER_COLORBUFFER);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, windowWidth, windowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, FRAMEBUFFER_COLORBUFFER, 0);
+
+        FRAMEBUFFER_RENDERBUFFER1 = glGenRenderbuffers();
+        glBindRenderbuffer(GL_RENDERBUFFER, FRAMEBUFFER_RENDERBUFFER1);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, windowWidth, windowHeight);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, FRAMEBUFFER_RENDERBUFFER1);
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+        if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){
+            Log.severe("Framebuffer not initialized");
+        }
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindTexture(GL_TEXTURE_2D, 0);
 
         //////////////////////////////////////////////////////////////////////////////////////
 
         Log.info("Initializing Shaders...");
-        WORLD_SHADER = new Shader(
+        SHADER_WORLD_STATIC_DEFAULT = new Shader(
                 "shader/world.vert",
                 "shader/world.frag"
+        );
+        SHADER_POST_DEFAULT = new Shader(
+                "shader/post/none.vert",
+                "shader/post/none.frag"
         );
         
         //////////////////////////////////////////////////////////////////////////////////////
@@ -158,23 +203,29 @@ public class Engine {
     public boolean render(ArrayList<Chunk> chunks, Vector3f position, Vector3f direction){
         if(glfwWindowShouldClose(window)) return false;
 
-        glClearColor(0.2f,0.3f,0.2f,1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
         float currentFrame = (float) glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
+        // First Pass
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /*glBindFramebuffer(GL_FRAMEBUFFER, FRAMEBUFFER);*/
+        glEnable(GL_DEPTH_TEST);
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
         viewMatrix = getViewMatrix(position, direction);
 
-        WORLD_SHADER.use();
-        WORLD_SHADER.setInt("WALL_TEXTURE", 0);
-        WORLD_SHADER.setInt("WALL_TEXTURE_B", 1);
-        WORLD_SHADER.setMatrix4f("projection", projectionMatrix);
-        WORLD_SHADER.setMatrix4f("view", viewMatrix);
-        WORLD_SHADER.setMatrix4f("model", modelMatrix);
+        SHADER_WORLD_STATIC_DEFAULT.use();
+        SHADER_WORLD_STATIC_DEFAULT.setInt("WALL_TEXTURE", 0);
+        SHADER_WORLD_STATIC_DEFAULT.setInt("WALL_TEXTURE_B", 1);
+        SHADER_WORLD_STATIC_DEFAULT.setMatrix4f("projection", projectionMatrix);
+        SHADER_WORLD_STATIC_DEFAULT.setMatrix4f("view", viewMatrix);
+        SHADER_WORLD_STATIC_DEFAULT.setMatrix4f("model", modelMatrix);
 
-        glBindVertexArray(WORLD_VAO);
         for(Chunk chunk : chunks){
             glBindBuffer(GL_ARRAY_BUFFER, chunk.getVBO());
             //   4   8   12  16  20  24
@@ -185,6 +236,22 @@ public class Engine {
             glEnableVertexAttribArray(1); // Texture Coordinates + ID
             glDrawArrays(GL_TRIANGLES, 0, chunk.getVertCount());
         }
+
+        /*/ Second Pass
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
+        glDisable(GL_DEPTH_TEST);
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        SHADER_POST_DEFAULT.use();
+        glBindVertexArray(VAO_POST_QUAD);
+        glBindTexture(GL_TEXTURE_2D, FRAMEBUFFER_COLORBUFFER);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
+
+
         glfwSwapBuffers(window);
         glfwPollEvents();
         return true;
@@ -192,8 +259,12 @@ public class Engine {
 
     public void cleanup(){
         Log.info("Cleaning up...");
-        WORLD_SHADER.delete();
-        glDeleteVertexArrays(WORLD_VAO);
+        SHADER_WORLD_STATIC_DEFAULT.delete();
+        glDeleteVertexArrays(VAO_WORLD);
+        glDeleteVertexArrays(VAO_POST_QUAD);
+        glDeleteBuffers(VBO_POST_QUAD);
+        glDeleteTextures(FRAMEBUFFER_COLORBUFFER);
+        glDeleteFramebuffers(FRAMEBUFFER);
         glfwDestroyWindow(window);
         glfwTerminate();
     }
