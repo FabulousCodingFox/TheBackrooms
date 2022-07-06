@@ -40,25 +40,25 @@ public class Chunk {
         Random random = new Random();
         for(int x = 0; x < CHUNK_SIZE; x++){
             for(int y = 0; y < CHUNK_SIZE; y++){
-                cubes[x][y] = random.nextInt(100) < 30 ? Cube.NORMAL_WALL : Cube.NORMAL_VOID;
+                setCube(x,y,random.nextInt(100) < 30 ? Cube.NORMAL_WALL : Cube.NORMAL_VOID);
             }
         }
-    }
-
-    public float[] getMesh(){
-        return mesh;
     }
 
     public int getVBO(){
         return VBO;
     }
 
+    public float[] getMesh(){
+        return mesh;
+    }
+
     public void generateMesh(){
-        ArrayList<Float> vertices = new ArrayList<>();
+        /*ArrayList<Float> vertices = new ArrayList<>();
         for(int x = 0; x < CHUNK_SIZE; x++){
             for(int y = 0; y < CHUNK_SIZE; y++){
                 int xp = x + chunkX * CHUNK_SIZE;
-                int yp = y + chunkY * CHUNK_SIZE;
+                int yp = - (y + chunkY * CHUNK_SIZE);
                 if(getCube(x,y) == Cube.NORMAL_VOID){
                     vertices.addAll(Arrays.asList(
                             -0.5f+xp, -2.5f, -0.5f+yp,  0.0f, 0.0f, 0.1f,
@@ -70,15 +70,29 @@ public class Chunk {
                     ));
                 }
             }
-        }
+        }*/
+
+        ArrayList<Float> vertices = new ArrayList<>(Arrays.asList(
+                -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
+                0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
+                0.5f, 0.5f, -0.5f, 1.0f, 1.0f, 0.0f,
+                0.5f, 0.5f, -0.5f, 1.0f, 1.0f, 0.0f,
+                -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
+                -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.0f
+        ));
+
         mesh = new float[vertices.size()];
         for(int i = 0; i < vertices.size(); i++){
             mesh[i] = vertices.get(i);
         }
 
+        System.out.println("Generated mesh for chunk " + chunkX + " " + chunkY);
+        System.out.println("Mesh size: " + mesh.length/6);
+        System.out.println("Mesh: " + Arrays.toString(mesh));
+
         VBO = glGenBuffers();
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferData(GL_ARRAY_BUFFER, mesh, GL_STATIC_DRAW);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBufferData(GL_ARRAY_BUFFER, mesh, GL_DYNAMIC_DRAW);
+        //glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 }
