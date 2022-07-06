@@ -173,10 +173,10 @@ public class Engine {
         BACKROOMS_WALL_TEXTURE = new Texture("textures/wall.png");
         BACKROOMS_WALL_TEXTURE_B = new Texture("textures/wall_b.jpg");
 
-        glActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, BACKROOMS_WALL_TEXTURE.get());
 
-        glActiveTexture(GL_TEXTURE1);
+        glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, BACKROOMS_WALL_TEXTURE_B.get());
 
 
@@ -210,7 +210,7 @@ public class Engine {
         // First Pass
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        /*glBindFramebuffer(GL_FRAMEBUFFER, FRAMEBUFFER);*/
+        glBindFramebuffer(GL_FRAMEBUFFER, FRAMEBUFFER);
         glEnable(GL_DEPTH_TEST);
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -220,8 +220,8 @@ public class Engine {
         viewMatrix = getViewMatrix(position, direction);
 
         SHADER_WORLD_STATIC_DEFAULT.use();
-        SHADER_WORLD_STATIC_DEFAULT.setInt("WALL_TEXTURE", 0);
-        SHADER_WORLD_STATIC_DEFAULT.setInt("WALL_TEXTURE_B", 1);
+        SHADER_WORLD_STATIC_DEFAULT.setInt("WALL_TEXTURE", 1);
+        SHADER_WORLD_STATIC_DEFAULT.setInt("WALL_TEXTURE_B", 2);
         SHADER_WORLD_STATIC_DEFAULT.setMatrix4f("projection", projectionMatrix);
         SHADER_WORLD_STATIC_DEFAULT.setMatrix4f("view", viewMatrix);
         SHADER_WORLD_STATIC_DEFAULT.setMatrix4f("model", modelMatrix);
@@ -237,7 +237,7 @@ public class Engine {
             glDrawArrays(GL_TRIANGLES, 0, chunk.getVertCount());
         }
 
-        /*/ Second Pass
+        // Second Pass
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
@@ -247,9 +247,10 @@ public class Engine {
 
         SHADER_POST_DEFAULT.use();
         glBindVertexArray(VAO_POST_QUAD);
+        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, FRAMEBUFFER_COLORBUFFER);
         glDrawArrays(GL_TRIANGLES, 0, 6);
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
         glfwSwapBuffers(window);
