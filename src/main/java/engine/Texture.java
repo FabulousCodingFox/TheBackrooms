@@ -35,7 +35,6 @@ public class Texture {
         IntBuffer x = BufferUtils.createIntBuffer(1);
         IntBuffer y = BufferUtils.createIntBuffer(1);
         IntBuffer channels = BufferUtils.createIntBuffer(1);
-        System.out.println(absolutePath);
         ByteBuffer image = stbi_load(absolutePath, x, y, channels, STBI_rgb);
         if (image == null) {
             throw new IllegalStateException("Could not decode image file ["+ absolutePath +"]: ["+ stbi_failure_reason() +"]");
