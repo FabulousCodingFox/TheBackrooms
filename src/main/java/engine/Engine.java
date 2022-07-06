@@ -3,8 +3,10 @@ package engine;
 import engine.enums.Key;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import structures.Chunk;
 import utils.Log;
 
+import java.util.ArrayList;
 import java.util.function.Consumer;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFWErrorCallback;
@@ -29,7 +31,7 @@ public class Engine {
     private float deltaTime;
     private float lastFrame;
     
-    private int WORLD_VAO, WORLD_VBO;
+    private int WORLD_VAO;
 
     private Shader WORLD_SHADER;
 
@@ -108,25 +110,8 @@ public class Engine {
         //glCullFace(GL_BACK);
         //glFrontFace(GL_CW);
 
-
-        float dist = 10.5f;
-        
-        float[] mesh = {
-                -0.5f, -0.5f, dist,  0.0f, 0.0f,
-                0.5f, -0.5f, dist,  1.0f, 0.0f,
-                0.5f,  0.5f, dist,  1.0f, 1.0f,
-                0.5f,  0.5f, dist,  1.0f, 1.0f,
-                -0.5f,  0.5f, dist,  0.0f, 1.0f,
-                -0.5f, -0.5f, dist,  0.0f, 0.0f
-        };
-
         WORLD_VAO = glGenVertexArrays();
-        WORLD_VBO = glGenBuffers();
-        //System.out.println("Generated VBO: " + VBO);
-        glBindBuffer(GL_ARRAY_BUFFER, WORLD_VBO);
-        glBufferData(GL_ARRAY_BUFFER, mesh, GL_DYNAMIC_DRAW);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        
+
         //////////////////////////////////////////////////////////////////////////////////////
 
         Log.info("Initializing Shaders...");
@@ -168,7 +153,7 @@ public class Engine {
         return new Matrix4f().perspective((float) Math.toRadians(fov), width/height, 0.1f, viewdistance);
     }
     
-    public boolean render(Vector3f position, Vector3f direction){
+    public boolean render(ArrayList<Chunk> chunks, Vector3f position, Vector3f direction){
         if(glfwWindowShouldClose(window)) return false;
 
         glClearColor(0.2f,0.3f,0.2f,1.0f);
@@ -190,13 +175,14 @@ public class Engine {
         WORLD_SHADER.setMatrix4f("model", modelMatrix);
 
         glBindVertexArray(WORLD_VAO);
-        glBindBuffer(GL_ARRAY_BUFFER, WORLD_VBO);
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, 20, 0);
-        glEnableVertexAttribArray(0); // Position
-        glVertexAttribPointer(1, 2, GL_FLOAT, false, 20, 12);
-        glEnableVertexAttribArray(1); // Texture Coordinates
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-
+        for(Chunk chunk : chunks){
+            glBindBuffer(GL_ARRAY_BUFFER, chunk.getVBO());
+            glVertexAttribPointer(0, 3, GL_FLOAT, false, 20, 0);
+            glEnableVertexAttribArray(0); // Position
+            glVertexAttribPointer(1, 2, GL_FLOAT, false, 20, 12);
+            glEnableVertexAttribArray(1); // Texture Coordinates
+            glDrawArrays(GL_TRIANGLES, 0, chunk.getVertCount());
+        }
         glfwSwapBuffers(window);
         glfwPollEvents();
         return true;
@@ -206,7 +192,6 @@ public class Engine {
         Log.info("Cleaning up...");
         WORLD_SHADER.delete();
         glDeleteVertexArrays(WORLD_VAO);
-        glDeleteBuffers(WORLD_VBO);
         glfwDestroyWindow(window);
         glfwTerminate();
     }
