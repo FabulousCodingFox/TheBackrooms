@@ -177,10 +177,12 @@ public class Engine {
         glBindVertexArray(WORLD_VAO);
         for(Chunk chunk : chunks){
             glBindBuffer(GL_ARRAY_BUFFER, chunk.getVBO());
-            glVertexAttribPointer(0, 3, GL_FLOAT, false, 20, 0);
+            //   4   8   12  16  20  24
+            //   X   Y   Z   U   V   TEXID
+            glVertexAttribPointer(0, 3, GL_FLOAT, false, 24, 0);
             glEnableVertexAttribArray(0); // Position
-            glVertexAttribPointer(1, 2, GL_FLOAT, false, 20, 12);
-            glEnableVertexAttribArray(1); // Texture Coordinates
+            glVertexAttribPointer(1, 3, GL_FLOAT, false, 24, 12);
+            glEnableVertexAttribArray(1); // Texture Coordinates + ID
             glDrawArrays(GL_TRIANGLES, 0, chunk.getVertCount());
         }
         glfwSwapBuffers(window);

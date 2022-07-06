@@ -14,19 +14,19 @@ public class Chunk {
     }
 
     public int getVertCount(){
-        return mesh.length / 5;
+        return mesh.length / 6;
     }
 
     public void generateMesh(){
         float dist = 10.5f;
 
         this.mesh = new float[]{
-                -0.5f, -0.5f, dist,  0.0f, 0.0f,
-                0.5f, -0.5f, dist,  1.0f, 0.0f,
-                0.5f,  0.5f, dist,  1.0f, 1.0f,
-                0.5f,  0.5f, dist,  1.0f, 1.0f,
-                -0.5f,  0.5f, dist,  0.0f, 1.0f,
-                -0.5f, -0.5f, dist,  0.0f, 0.0f
+                -0.5f, -0.5f, dist,  0.0f, 0.0f, 0.0f,
+                0.5f, -0.5f, dist,  1.0f, 0.0f, 0.0f,
+                0.5f,  0.5f, dist,  1.0f, 1.0f, 0.0f,
+                0.5f,  0.5f, dist,  1.0f, 1.0f, 0.1f,
+                -0.5f,  0.5f, dist,  0.0f, 1.0f, 0.1f,
+                -0.5f, -0.5f, dist,  0.0f, 0.0f, 0.1f
         };
 
         this.VBO = glGenBuffers();
