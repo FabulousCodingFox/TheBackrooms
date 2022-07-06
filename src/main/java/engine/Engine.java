@@ -109,14 +109,15 @@ public class Engine {
         //glFrontFace(GL_CW);
 
 
+        float dist = 10.5f;
         
         float[] mesh = {
-                -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-                0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-                0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-                0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-                -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-                -0.5f, -0.5f, -0.5f,  0.0f, 0.0f
+                -0.5f, -0.5f, dist,  0.0f, 0.0f,
+                0.5f, -0.5f, dist,  1.0f, 0.0f,
+                0.5f,  0.5f, dist,  1.0f, 1.0f,
+                0.5f,  0.5f, dist,  1.0f, 1.0f,
+                -0.5f,  0.5f, dist,  0.0f, 1.0f,
+                -0.5f, -0.5f, dist,  0.0f, 0.0f
         };
 
         WORLD_VAO = glGenVertexArrays();
@@ -154,8 +155,6 @@ public class Engine {
         projectionMatrix = getProjectionMatrix(windowWidth, windowHeight, 60, 100);
         modelMatrix = new Matrix4f();
         viewMatrix = getViewMatrix(new Vector3f(0,0,0), new Vector3f(0,0,1));
-
-
     }
 
     public Matrix4f getViewMatrix(Vector3f position, Vector3f direction){
@@ -185,9 +184,10 @@ public class Engine {
 
         WORLD_SHADER.use();
         WORLD_SHADER.setInt("WALL_TEXTURE", 0);
-        //WORLD_SHADER.setMatrix4f("projection", projectionMatrix);
-        //WORLD_SHADER.setMatrix4f("view", viewMatrix);
-        //WORLD_SHADER.setMatrix4f("model", modelMatrix);
+        WORLD_SHADER.setInt("WALL_TEXTURE_B", 1);
+        WORLD_SHADER.setMatrix4f("projection", projectionMatrix);
+        WORLD_SHADER.setMatrix4f("view", viewMatrix);
+        WORLD_SHADER.setMatrix4f("model", modelMatrix);
 
         glBindVertexArray(WORLD_VAO);
         glBindBuffer(GL_ARRAY_BUFFER, WORLD_VBO);
