@@ -40,6 +40,8 @@ public class Engine {
     public Engine(int windowWidth, int windowHeight, String windowTitle){
         this.windowWidth = windowWidth;
         this.windowHeight = windowHeight;
+
+        this.deltaTime = 0.0f;
         
         //////////////////////////////////////////////////////////////////////////////////////
 
@@ -165,8 +167,6 @@ public class Engine {
 
         viewMatrix = getViewMatrix(position, direction);
 
-        //TODO: INPUT
-
         WORLD_SHADER.use();
         WORLD_SHADER.setInt("WALL_TEXTURE", 0);
         WORLD_SHADER.setInt("WALL_TEXTURE_B", 1);
@@ -198,6 +198,20 @@ public class Engine {
         glfwTerminate();
     }
 
-    public void setKeyCallback(Consumer<Key[]> callback) {} //TODO: Implement this
+    public boolean getIfKeyIsPressed(Key key){
+        if(key == Key.WALK_FORWARD) return glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS;
+        if(key == Key.WALK_BACKWARD) return glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS;
+        if(key == Key.TURN_LEFT) return glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS;
+        if(key == Key.TURN_RIGHT) return glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS;
+        if(key == Key.SPRINT) return glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS;
+        if(key == Key.CROUCH) return glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS;
+        return false;
+    }
+
+    public float getFrameTime(){
+        return deltaTime;
+    }
+
+
 
 }
