@@ -73,7 +73,28 @@ public class Engine {
         glfwSetWindowSizeCallback(window, (window, width, height) -> {
             this.windowWidth = width;
             this.windowHeight = height;
+            glViewport(0, 0, width, height);
             projectionMatrix = getProjectionMatrix(this.windowWidth, this.windowHeight, 60, 100);
+
+            // Resize Framebuffer
+            glBindFramebuffer(GL_FRAMEBUFFER, FRAMEBUFFER);
+
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, FRAMEBUFFER_COLORBUFFER);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, windowWidth, windowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, FRAMEBUFFER_COLORBUFFER, 0);
+            glBindRenderbuffer(GL_RENDERBUFFER, FRAMEBUFFER_RENDERBUFFER1);
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, windowWidth, windowHeight);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, FRAMEBUFFER_RENDERBUFFER1);
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glBindTexture(GL_TEXTURE_2D, 0);
+            glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+
+
+
         });
         glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
             if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) glfwSetWindowShouldClose(window, true);
@@ -137,6 +158,7 @@ public class Engine {
         glBindFramebuffer(GL_FRAMEBUFFER, FRAMEBUFFER);
 
         FRAMEBUFFER_COLORBUFFER = glGenTextures();
+        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, FRAMEBUFFER_COLORBUFFER);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, windowWidth, windowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -163,8 +185,8 @@ public class Engine {
                 "shader/world.frag"
         );
         SHADER_POST_DEFAULT = new Shader(
-                "shader/post/none.vert",
-                "shader/post/none.frag"
+                "shader/post/default.vert",
+                "shader/post/default.frag"
         );
         
         //////////////////////////////////////////////////////////////////////////////////////
