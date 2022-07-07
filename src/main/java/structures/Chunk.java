@@ -15,6 +15,10 @@ public class Chunk {
 
     private final int chunkX, chunkY;
 
+    private Chunk[] neighbors;
+
+    boolean ready = false;
+
     public Chunk(int x, int y) {
         cubes = new Cube[SIZE][SIZE];
         chunkX = x;
@@ -33,28 +37,35 @@ public class Chunk {
         Random random = new Random();
         for(int x=0; x<SIZE; x++){
             for(int y=0; y<SIZE; y++){
-                cubes[x][y] = random.nextInt(100) < 30 ? Cube.NORMAL_WALL : Cube.NORMAL_VOID;
+                cubes[x][y] = random.nextInt(100) < 10 ? Cube.NORMAL_WALL : Cube.NORMAL_VOID;
             }
         }
     }
 
-    public void generateMesh(){
-        /*float dist = 10.5f;
+    public float[] getMesh(){
+        return mesh;
+    }
 
-        this.mesh = new float[]{
-                -0.5f, -0.5f, dist,  0.0f, 0.0f, 0.0f,
-                0.5f, -0.5f, dist,  1.0f, 0.0f, 0.0f,
-                0.5f,  0.5f, dist,  1.0f, 1.0f, 0.0f,
-                0.5f,  0.5f, dist,  1.0f, 1.0f, 0.0f,
-                -0.5f,  0.5f, dist,  0.0f, 1.0f, 0.0f,
-                -0.5f, -0.5f, dist,  0.0f, 0.0f, 0.0f
-        };
+    public int getX(){
+        return chunkX;
+    }
+    public int getY(){
+        return chunkY;
+    }
 
-        this.VBO = glGenBuffers();
-        glBindBuffer(GL_ARRAY_BUFFER, this.VBO);
-        glBufferData(GL_ARRAY_BUFFER, this.mesh, GL_STATIC_DRAW);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);*/
+    public Cube getCube(int x, int y){
+        return cubes[x][y];
+    }
 
+    private boolean getIfCubeIsTransparent(int x, int y, Chunk px, Chunk mx, Chunk pz, Chunk mz){
+        if(x>=SIZE) return px.getCube(x-SIZE,y)==Cube.NORMAL_VOID;
+        if(x<0) return mx.getCube(x+SIZE,y)==Cube.NORMAL_VOID;
+        if(y>=SIZE) return pz.getCube(x,y-SIZE)==Cube.NORMAL_VOID;
+        if(y<0) return mz.getCube(x,y+SIZE)==Cube.NORMAL_VOID;
+        return this.getCube(x,y)==Cube.NORMAL_VOID;
+    }
+
+    public void generateMesh(Chunk px, Chunk mx, Chunk pz, Chunk mz){
         ArrayList<Float> vertices = new ArrayList<>();
 
         for(int x = 0; x < SIZE; x++){
@@ -63,40 +74,46 @@ public class Chunk {
                 int yp = y + chunkY * SIZE;
 
                 if (cubes[x][y] == Cube.NORMAL_WALL) {
-                    vertices.addAll(List.of(
-                            // +z
-                            -0.5f+xp, -0.5f, 0.5f+yp,  0.0f, 0.0f, 0.0f,
-                            0.5f+xp, -0.5f, 0.5f+yp,  1.0f, 0.0f, 0.0f,
-                            0.5f+xp,  0.5f, 0.5f+yp,  1.0f, 1.0f, 0.0f,
-                            0.5f+xp,  0.5f, 0.5f+yp,  1.0f, 1.0f, 0.0f,
-                            -0.5f+xp,  0.5f, 0.5f+yp,  0.0f, 1.0f, 0.0f,
-                            -0.5f+xp, -0.5f, 0.5f+yp,  0.0f, 0.0f, 0.0f,
-
-                            // -z
-                            -0.5f+xp, -0.5f, -0.5f+yp,  0.0f, 0.0f, 0.0f,
-                            0.5f+xp, -0.5f, -0.5f+yp,  1.0f, 0.0f, 0.0f,
-                            0.5f+xp,  0.5f, -0.5f+yp,  1.0f, 1.0f, 0.0f,
-                            0.5f+xp,  0.5f, -0.5f+yp,  1.0f, 1.0f, 0.0f,
-                            -0.5f+xp,  0.5f, -0.5f+yp,  0.0f, 1.0f, 0.0f,
-                            -0.5f+xp, -0.5f, -0.5f+yp,  0.0f, 0.0f, 0.0f,
-
-                            // +x
-                            0.5f+xp, -0.5f, -0.5f+yp,  0.0f, 0.0f, 0.0f,
-                            0.5f+xp, -0.5f, 0.5f+yp,  1.0f, 0.0f, 0.0f,
-                            0.5f+xp,  0.5f, 0.5f+yp,  1.0f, 1.0f, 0.0f,
-                            0.5f+xp,  0.5f, 0.5f+yp,  1.0f, 1.0f, 0.0f,
-                            0.5f+xp,  0.5f, -0.5f+yp,  0.0f, 1.0f, 0.0f,
-                            0.5f+xp, -0.5f, -0.5f+yp,  0.0f, 0.0f, 0.0f,
-
-                            // -x
-                            -0.5f+xp, -0.5f, -0.5f+yp,  0.0f, 0.0f, 0.0f,
-                            -0.5f+xp, -0.5f, 0.5f+yp,  1.0f, 0.0f, 0.0f,
-                            -0.5f+xp,  0.5f, 0.5f+yp,  1.0f, 1.0f, 0.0f,
-                            -0.5f+xp,  0.5f, 0.5f+yp,  1.0f, 1.0f, 0.0f,
-                            -0.5f+xp,  0.5f, -0.5f+yp,  0.0f, 1.0f, 0.0f,
-                            -0.5f+xp, -0.5f, -0.5f+yp,  0.0f, 0.0f, 0.0f
-                    ));
-
+                    if (getIfCubeIsTransparent(x + 1, y, px, mx, pz, mz)) {
+                        vertices.addAll(List.of(
+                                0.5f+xp, -0.5f, -0.5f+yp,  0.0f, 0.0f, 0.0f,
+                                0.5f+xp, -0.5f, 0.5f+yp,  1.0f, 0.0f, 0.0f,
+                                0.5f+xp,  0.5f, 0.5f+yp,  1.0f, 1.0f, 0.0f,
+                                0.5f+xp,  0.5f, 0.5f+yp,  1.0f, 1.0f, 0.0f,
+                                0.5f+xp,  0.5f, -0.5f+yp,  0.0f, 1.0f, 0.0f,
+                                0.5f+xp, -0.5f, -0.5f+yp,  0.0f, 0.0f, 0.0f
+                        ));
+                    }
+                    if (getIfCubeIsTransparent(x - 1, y, px, mx, pz, mz)) {
+                        vertices.addAll(List.of(
+                                -0.5f+xp, -0.5f, -0.5f+yp,  0.0f, 0.0f, 0.0f,
+                                -0.5f+xp, -0.5f, 0.5f+yp,  1.0f, 0.0f, 0.0f,
+                                -0.5f+xp,  0.5f, 0.5f+yp,  1.0f, 1.0f, 0.0f,
+                                -0.5f+xp,  0.5f, 0.5f+yp,  1.0f, 1.0f, 0.0f,
+                                -0.5f+xp,  0.5f, -0.5f+yp,  0.0f, 1.0f, 0.0f,
+                                -0.5f+xp, -0.5f, -0.5f+yp,  0.0f, 0.0f, 0.0f
+                        ));
+                    }
+                    if (getIfCubeIsTransparent(x, y + 1, px, mx, pz, mz)) {
+                        vertices.addAll(List.of(
+                                -0.5f+xp, -0.5f, 0.5f+yp,  0.0f, 0.0f, 0.0f,
+                                0.5f+xp, -0.5f, 0.5f+yp,  1.0f, 0.0f, 0.0f,
+                                0.5f+xp,  0.5f, 0.5f+yp,  1.0f, 1.0f, 0.0f,
+                                0.5f+xp,  0.5f, 0.5f+yp,  1.0f, 1.0f, 0.0f,
+                                -0.5f+xp,  0.5f, 0.5f+yp,  0.0f, 1.0f, 0.0f,
+                                -0.5f+xp, -0.5f, 0.5f+yp,  0.0f, 0.0f, 0.0f
+                        ));
+                    }
+                    if (getIfCubeIsTransparent(x, y - 1, px, mx, pz, mz)) {
+                        vertices.addAll(List.of(
+                                -0.5f+xp, -0.5f, -0.5f+yp,  0.0f, 0.0f, 0.0f,
+                                0.5f+xp, -0.5f, -0.5f+yp,  1.0f, 0.0f, 0.0f,
+                                0.5f+xp,  0.5f, -0.5f+yp,  1.0f, 1.0f, 0.0f,
+                                0.5f+xp,  0.5f, -0.5f+yp,  1.0f, 1.0f, 0.0f,
+                                -0.5f+xp,  0.5f, -0.5f+yp,  0.0f, 1.0f, 0.0f,
+                                -0.5f+xp, -0.5f, -0.5f+yp,  0.0f, 0.0f, 0.0f
+                        ));
+                    }
                 }
                 else if (cubes[x][y] == Cube.NORMAL_VOID) {
                     vertices.addAll(List.of(
@@ -122,10 +139,33 @@ public class Chunk {
         for(int i = 0; i < vertices.size(); i++){
             this.mesh[i] = vertices.get(i);
         }
+    }
 
+    public void generateVBO(){
         this.VBO = glGenBuffers();
         glBindBuffer(GL_ARRAY_BUFFER, this.VBO);
         glBufferData(GL_ARRAY_BUFFER, this.mesh, GL_STATIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
+        ready = true;
     }
+
+    public void destroy(){
+        ready = false;
+        glDeleteBuffers(this.VBO);
+        this.neighbors = null;
+    }
+
+    public boolean isReady(){
+        return ready;
+    }
+
+    public Chunk[] getNeighbors(){
+        return this.neighbors;
+    }
+
+    public void setNeighbors(Chunk[] neighbors){
+        this.neighbors = neighbors;
+    }
+
+
 }

@@ -161,7 +161,6 @@ public class Engine {
         glBindFramebuffer(GL_FRAMEBUFFER, FRAMEBUFFER);
 
         FRAMEBUFFER_COLORBUFFER = glGenTextures();
-        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, FRAMEBUFFER_COLORBUFFER);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, windowWidth, windowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -217,7 +216,10 @@ public class Engine {
         return new Matrix4f().perspective((float) Math.toRadians(fov), width/height, 0.1f, viewdistance);
     }
 
+
     public boolean render(ArrayList<Chunk> chunks, Vector3f position, Vector3f direction){
+        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
         if(glfwWindowShouldClose(window)) return false;
 
         float currentFrame = (float) glfwGetTime();
@@ -227,7 +229,7 @@ public class Engine {
         // First Pass
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        glBindFramebuffer(GL_FRAMEBUFFER, FRAMEBUFFER);
+        //glBindFramebuffer(GL_FRAMEBUFFER, FRAMEBUFFER);
         glEnable(GL_DEPTH_TEST);
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -255,12 +257,12 @@ public class Engine {
             glDrawArrays(GL_TRIANGLES, 0, chunk.getVertCount());
         }
 
-        // Second Pass
+        /*/ Second Pass
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
         glDisable(GL_DEPTH_TEST);
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        glClearColor(0.0f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         SHADER_POST_DEFAULT.use();
@@ -270,8 +272,7 @@ public class Engine {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, FRAMEBUFFER_COLORBUFFER);
         glDrawArrays(GL_TRIANGLES, 0, 6);
-        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
         glfwSwapBuffers(window);
         glfwPollEvents();
