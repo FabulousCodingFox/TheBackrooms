@@ -4,6 +4,7 @@ import org.joml.Vector3f;
 import structures.Chunk;
 
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.stream.Collectors;
 
 public class Client {
@@ -43,14 +44,23 @@ public class Client {
 
         boolean running = true;
         while (running) {
-            // Update Chunks
-            ArrayList<Chunk> chunkToRender = new ArrayList<>(chunksToRender);
-            for(Chunk chunk : chunkToRender) {chunk.generateVBO();}
-            chunksToRender.removeIf(chunkToRender::contains);
-            ArrayList<Chunk> chunkToDestroy = new ArrayList<>(chunksToDestroy);
-            for(Chunk chunk : chunkToDestroy) {chunk.destroy();}
-            chunksToDestroy.removeIf(chunkToDestroy::contains);
-            chunks.removeIf(chunkToDestroy::contains);;
+            try {
+                // Update Chunks
+                ArrayList<Chunk> chunkToRender = new ArrayList<>(chunksToRender);
+                for (Chunk chunk : chunkToRender) {
+                    chunk.generateVBO();
+                }
+                chunksToRender.removeIf(chunkToRender::contains);
+                ArrayList<Chunk> chunkToDestroy = new ArrayList<>(chunksToDestroy);
+                for (Chunk chunk : chunkToDestroy) {
+                    chunk.destroy();
+                }
+                chunksToDestroy.removeIf(chunkToDestroy::contains);
+                chunks.removeIf(chunkToDestroy::contains);
+                ;
+            } catch (ConcurrentModificationException e) {
+                e.printStackTrace();
+            }
 
             // Event Queue
             float deltaTime = engine.getFrameTime();

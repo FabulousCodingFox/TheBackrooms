@@ -186,8 +186,8 @@ public class Engine {
                 "shader/world.frag"
         );
         SHADER_POST_DEFAULT = new Shader(
-                "shader/post/default.vert",
-                "shader/post/default.frag"
+                "shader/post/advanced.vert",
+                "shader/post/advanced.frag"
         );
 
         //////////////////////////////////////////////////////////////////////////////////////
@@ -229,7 +229,7 @@ public class Engine {
         // First Pass
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        //glBindFramebuffer(GL_FRAMEBUFFER, FRAMEBUFFER);
+        glBindFramebuffer(GL_FRAMEBUFFER, FRAMEBUFFER);
         glEnable(GL_DEPTH_TEST);
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -257,7 +257,7 @@ public class Engine {
             glDrawArrays(GL_TRIANGLES, 0, chunk.getVertCount());
         }
 
-        /*/ Second Pass
+        // Second Pass
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
@@ -267,11 +267,12 @@ public class Engine {
 
         SHADER_POST_DEFAULT.use();
         SHADER_POST_DEFAULT.setVector2f("iResolution", new Vector2f(windowWidth, windowHeight));
-        SHADER_POST_DEFAULT.setFloat("iTime", currentFrame);
+        SHADER_POST_DEFAULT.setFloat("iTime", (float) glfwGetTime());
         glBindVertexArray(VAO_POST_QUAD);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, FRAMEBUFFER_COLORBUFFER);
         glDrawArrays(GL_TRIANGLES, 0, 6);
+        glBindVertexArray(0);
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
         glfwSwapBuffers(window);

@@ -30,19 +30,34 @@ public class Shader {
         int vertexShader = glCreateShader(GL_VERTEX_SHADER);
         glShaderSource(vertexShader, vertexCode);
         glCompileShader(vertexShader);
-        if(glGetShaderi(vertexShader, GL_COMPILE_STATUS) == GL_FALSE) throw new RuntimeException("Vertex shader failed to compile: "+vertexPath);
+        if(glGetShaderi(vertexShader, GL_COMPILE_STATUS) == GL_FALSE){
+            System.out.println(
+                    glGetShaderInfoLog(vertexShader, glGetShaderi(vertexShader, GL_INFO_LOG_LENGTH))
+            );
+            throw new RuntimeException("Vertex shader failed to compile: "+vertexPath);
+        }
 
         int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
         glShaderSource(fragmentShader, fragmentCode);
         glCompileShader(fragmentShader);
-        if(glGetShaderi(fragmentShader, GL_COMPILE_STATUS) == GL_FALSE) throw new RuntimeException("Fragment shader failed to compile: "+fragmentPath);
+        if(glGetShaderi(fragmentShader, GL_COMPILE_STATUS) == GL_FALSE){
+            System.out.println(
+                    glGetShaderInfoLog(fragmentShader, glGetShaderi(fragmentShader, GL_INFO_LOG_LENGTH))
+            );
+            throw new RuntimeException("Fragment shader failed to compile: "+fragmentPath);
+        }
 
         // 3. create shader program
         ID = glCreateProgram();
         glAttachShader(ID, vertexShader);
         glAttachShader(ID, fragmentShader);
         glLinkProgram(ID);
-        if(glGetProgrami(ID, GL_LINK_STATUS) == GL_FALSE) throw new RuntimeException("Shader program failed to link: "+vertexPath+" and "+fragmentPath);
+        if(glGetProgrami(ID, GL_LINK_STATUS) == GL_FALSE){
+            System.out.println(
+                    glGetProgramInfoLog(ID, glGetProgrami(ID, GL_INFO_LOG_LENGTH))
+            );
+            throw new RuntimeException("Shader program failed to link: "+vertexPath+" and "+fragmentPath);
+        }
 
         // 4. clean up
         glDeleteShader(vertexShader);
