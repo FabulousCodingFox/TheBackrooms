@@ -1,12 +1,16 @@
 package engine;
 
 import engine.enums.Key;
+import engine.font.TextToTexture;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import structures.Chunk;
 import utils.Log;
 
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 import org.lwjgl.Version;
@@ -40,9 +44,12 @@ public class Engine {
     private int FRAMEBUFFER_COLORBUFFER;
     private int FRAMEBUFFER_RENDERBUFFER1;
 
-    private final Shader SHADER_WORLD_STATIC_DEFAULT, SHADER_POST_DEFAULT;
+    private final Shader SHADER_WORLD_STATIC_DEFAULT, SHADER_POST_DEFAULT, SHADER_MENU_DEFAULT;
 
     private final Texture TEXTURE_BACKROOMS_WALL, TEXTURE_BACKROOMS_FLOOR, TEXTURE_BACKROOMS_CEILING;
+    private int menuTexture;
+
+    private final int targetFPS = 60;
 
     public Engine(int windowWidth, int windowHeight, String windowTitle){
         this.windowWidth = windowWidth;
@@ -189,6 +196,10 @@ public class Engine {
                 "shader/post/advanced.vert",
                 "shader/post/advanced.frag"
         );
+        SHADER_MENU_DEFAULT = new Shader(
+                "shader/menu.vert",
+                "shader/menu.frag"
+        );
 
         //////////////////////////////////////////////////////////////////////////////////////
 
@@ -203,6 +214,14 @@ public class Engine {
         projectionMatrix = getProjectionMatrix(windowWidth, windowHeight, 60, 100);
         modelMatrix = new Matrix4f();
         viewMatrix = getViewMatrix(new Vector3f(0,0,0), new Vector3f(0,0,1));
+
+
+        try {
+            TextToTexture.init();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     public Matrix4f getViewMatrix(Vector3f position, Vector3f direction){
@@ -280,6 +299,59 @@ public class Engine {
         return true;
     }
 
+    public boolean renderTerminal(String text){
+        if(glfwWindowShouldClose(window)) return false;
+
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // First Pass
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //glBindFramebuffer(GL_FRAMEBUFFER, FRAMEBUFFER);
+        glDisable(GL_DEPTH_TEST);
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+
+        SHADER_MENU_DEFAULT.use();
+        SHADER_MENU_DEFAULT.setVector2f("iResolution", new Vector2f(windowWidth, windowHeight));
+        SHADER_MENU_DEFAULT.setFloat("iTime", (float) glfwGetTime());
+
+        TextToTexture.RenderText(text);
+        ByteBuffer buffer = TextToTexture.getImageData();
+        menuTexture = glGenTextures();
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, menuTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, windowWidth, windowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, buffer);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+        glBindVertexArray(VAO_POST_QUAD);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glBindVertexArray(0);
+
+        buffer.clear();
+        glDeleteTextures(menuTexture);
+
+        /*/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // Second Pass
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        SHADER_POST_DEFAULT.use();
+        SHADER_POST_DEFAULT.setVector2f("iResolution", new Vector2f(windowWidth, windowHeight));
+        SHADER_POST_DEFAULT.setFloat("iTime", (float) glfwGetTime());
+        glBindVertexArray(VAO_POST_QUAD);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, FRAMEBUFFER_COLORBUFFER);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glBindVertexArray(0);
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
+
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+        return true;
+    }
+
     public void cleanup(){
         Log.info("Cleaning up...");
         SHADER_WORLD_STATIC_DEFAULT.delete();
@@ -307,6 +379,10 @@ public class Engine {
 
     public float getFrameTime(){
         return deltaTime;
+    }
+
+    public double getTime(){
+        return glfwGetTime();
     }
 
 

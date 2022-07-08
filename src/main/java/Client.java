@@ -8,7 +8,7 @@ import java.util.ConcurrentModificationException;
 import java.util.stream.Collectors;
 
 public class Client {
-    private final Engine engine;
+    private Engine engine;
 
     private Vector3f playerPosition, playerLookAt, playerPrevPosition;
     private double playerRotation;
@@ -17,10 +17,33 @@ public class Client {
 
     private Thread chunkThread;
 
-    private final ArrayList<Chunk> chunks, chunksToDestroy, chunksToRender;
+    private ArrayList<Chunk> chunks, chunksToDestroy, chunksToRender;
     private final int playerRenderDistance = 5;
 
     public Client(){
+        engine = new Engine(1280,960, "The Backrooms");
+        backrooms();
+    }
+
+    public void terminal(){
+        String header = "***** BACKROOMS INC.[BackOS 64 Basic System] *****\n\n";
+        String additionalText = "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi. Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi. Nam liber tempor cum soluta nobis eleifend option congue nihil imperdiet doming id quod mazim placerat facer possim assum. Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim v";
+        String prompt = "> ";
+
+        int index = 0;
+
+        double starttime = engine.getTime();
+
+        System.out.println(header);
+
+        boolean running = true;
+        while (running) {
+            running = engine.renderTerminal(header + prompt + additionalText);
+        }
+    }
+
+
+    public void backrooms(){
         playerPosition = new Vector3f(0, 0, 0);
         playerPrevPosition = new Vector3f(0, 0, 0);
         playerLookAt = new Vector3f(0, 0, 1);
@@ -30,8 +53,6 @@ public class Client {
         playerSprintSpeed = playerWalkSpeed * 2f;
         playerTurnSpeed = 90f;
         playerCrouchSpeed = playerWalkSpeed / 2f;
-
-        engine = new Engine(1280,960, "The Backrooms");
 
         chunks = new ArrayList<>();
         chunksToDestroy = new ArrayList<>();
@@ -57,7 +78,6 @@ public class Client {
                 }
                 chunksToDestroy.removeIf(chunkToDestroy::contains);
                 chunks.removeIf(chunkToDestroy::contains);
-                ;
             } catch (ConcurrentModificationException e) {
                 e.printStackTrace();
             }
