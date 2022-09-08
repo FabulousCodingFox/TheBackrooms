@@ -18,32 +18,11 @@ public class Client {
     private Thread chunkThread;
 
     private ArrayList<Chunk> chunks, chunksToDestroy, chunksToRender;
-    private final int playerRenderDistance = 5;
+    private final int playerRenderDistance = 6;
 
     public Client(){
         engine = new Engine(1280,960, "The Backrooms");
-        backrooms();
-    }
 
-    public void terminal(){
-        String header = "***** BACKROOMS INC.[BackOS 64 Basic System] *****\n\n";
-        String additionalText = "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi. Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi. Nam liber tempor cum soluta nobis eleifend option congue nihil imperdiet doming id quod mazim placerat facer possim assum. Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim v";
-        String prompt = "> ";
-
-        int index = 0;
-
-        double starttime = engine.getTime();
-
-        System.out.println(header);
-
-        boolean running = true;
-        while (running) {
-            running = engine.renderTerminal(header + prompt + additionalText);
-        }
-    }
-
-
-    public void backrooms(){
         playerPosition = new Vector3f(0, 0, 0);
         playerPrevPosition = new Vector3f(0, 0, 0);
         playerLookAt = new Vector3f(0, 0, 1);
@@ -62,7 +41,46 @@ public class Client {
         chunkThread = new Thread(this::updateChunks);
         chunkThread.start();
 
+        while (true) {
+            if(terminal()) break;
+            if(backrooms()) break;
+        }
 
+        engine.cleanup();
+    }
+
+    public boolean terminal(){
+        String header = "***** BACKROOMS INC.[BackOS 64 Basic System] *****\n\n";
+
+        String additionalText = "";
+
+        int index = 0;
+
+        engine.clearTypedText();
+
+        boolean running = true;
+        while (running) {
+            if(engine.getTypedText().contains("\n")){
+                additionalText += engine.getTypedText().split("\n")[0] + "\n";
+
+                String cmd = engine.getTypedText().split("\n")[0].substring(2);
+                if(cmd.equalsIgnoreCase("start")) return false;
+                if(cmd.startsWith("shader ")){
+                    if(cmd.endsWith("0")) engine.setPostShader(0);
+                    if(cmd.endsWith("1")) engine.setPostShader(1);
+                    if(cmd.endsWith("2")) engine.setPostShader(2);
+                }
+
+                engine.clearTypedText();
+            }
+
+            running = engine.renderTerminal(header+additionalText+engine.getTypedText());
+        }
+        return true;
+    }
+
+
+    public boolean backrooms(){
         boolean running = true;
         while (running) {
             try {
@@ -91,6 +109,9 @@ public class Client {
             boolean keyTurnRight = engine.getIfKeyIsPressed(Key.TURN_RIGHT);
             boolean keySprint = engine.getIfKeyIsPressed(Key.SPRINT);
             boolean keyCrouch = engine.getIfKeyIsPressed(Key.CROUCH);
+
+            boolean keyTerminal = engine.getIfKeyIsPressed(Key.TERMINAL);
+            if(keyTerminal) return false;
 
             if(keyTurnLeft || keyTurnRight){
                 playerRotation += (keyTurnLeft ? -1 : 1) * playerTurnSpeed * deltaTime;
@@ -125,8 +146,7 @@ public class Client {
             }
             playerPrevPosition.set(playerPosition);
         }
-        engine.cleanup();
-
+        return true;
     }
 
     public void updateChunks() {

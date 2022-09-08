@@ -37,7 +37,7 @@ public class Chunk {
         Random random = new Random();
         for(int x=0; x<SIZE; x++){
             for(int y=0; y<SIZE; y++){
-                cubes[x][y] = random.nextInt(100) < 10 ? Cube.NORMAL_WALL : Cube.NORMAL_VOID;
+                cubes[x][y] = random.nextInt(100) < 20 ? Cube.NORMAL_WALL : Cube.NORMAL_VOID;
             }
         }
     }
