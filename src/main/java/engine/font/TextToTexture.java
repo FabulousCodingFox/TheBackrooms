@@ -99,7 +99,7 @@ public class TextToTexture {
         int[] pixels = new int[image.getWidth() * image.getHeight()];
         image.getRGB(0, 0, image.getWidth(), image.getHeight(), pixels, 0, image.getWidth());
         ByteBuffer buffer = ByteBuffer.allocateDirect(image.getWidth() * image.getHeight() * 4);
-        for(int h = 0; h < image.getHeight(); h++) {
+        for(int h = image.getHeight()-1; h >= 0; h--) {
             for(int w = 0; w < image.getWidth(); w++) {
                 int pixel = pixels[h * image.getWidth() + w];
 
@@ -115,8 +115,15 @@ public class TextToTexture {
 
     public static void main(String[] args) throws IOException {
         init();
-        RenderText("Hello World!\nThis is a demo of the retro text-to-image converter meant for OpenGL applications. (It supports many C64 characters, but only the ones I've used.) Linebreaks are also supported and automatically inserted");
+        RenderText("Hello World!");
         ImageIO.write(image, "png", new File("C:\\Users\\fabif\\IdeaProjects\\TheBackrooms\\src\\main\\resources\\textures\\text.png"));
     }
 
+    public static int getWidth(){
+        return image.getWidth();
+    }
+
+    public static int getHeight(){
+        return image.getHeight();
+    }
 }

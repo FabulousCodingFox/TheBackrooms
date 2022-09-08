@@ -8,7 +8,6 @@ import org.joml.Vector3f;
 import structures.Chunk;
 import utils.Log;
 
-import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -44,10 +43,14 @@ public class Engine {
     private int FRAMEBUFFER_COLORBUFFER;
     private int FRAMEBUFFER_RENDERBUFFER1;
 
-    private final Shader SHADER_WORLD_STATIC_DEFAULT, SHADER_POST_DEFAULT, SHADER_MENU_DEFAULT;
+    private final Shader SHADER_WORLD_STATIC_DEFAULT, SHADER_POST_NONE, SHADER_POST_LITE, SHADER_POST_CINEMATIC, SHADER_MENU_DEFAULT;
 
     private final Texture TEXTURE_BACKROOMS_WALL, TEXTURE_BACKROOMS_FLOOR, TEXTURE_BACKROOMS_CEILING;
     private int menuTexture;
+
+    private int postShaderNum = 1;
+
+    private String typedText = "";
 
     private final int targetFPS = 60;
 
@@ -108,6 +111,55 @@ public class Engine {
         });
         glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
             if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) glfwSetWindowShouldClose(window, true);
+
+            if(action == GLFW_PRESS){
+                char c = switch (key){
+                    case GLFW_KEY_A -> 'a';
+                    case GLFW_KEY_B -> 'b';
+                    case GLFW_KEY_C -> 'c';
+                    case GLFW_KEY_D -> 'd';
+                    case GLFW_KEY_E -> 'e';
+                    case GLFW_KEY_F -> 'f';
+                    case GLFW_KEY_G -> 'g';
+                    case GLFW_KEY_H -> 'h';
+                    case GLFW_KEY_I -> 'i';
+                    case GLFW_KEY_J -> 'j';
+                    case GLFW_KEY_K -> 'k';
+                    case GLFW_KEY_L -> 'l';
+                    case GLFW_KEY_M -> 'm';
+                    case GLFW_KEY_N -> 'n';
+                    case GLFW_KEY_O -> 'o';
+                    case GLFW_KEY_P -> 'p';
+                    case GLFW_KEY_Q -> 'q';
+                    case GLFW_KEY_R -> 'r';
+                    case GLFW_KEY_S -> 's';
+                    case GLFW_KEY_T -> 't';
+                    case GLFW_KEY_U -> 'u';
+                    case GLFW_KEY_V -> 'v';
+                    case GLFW_KEY_W -> 'w';
+                    case GLFW_KEY_X -> 'x';
+                    case GLFW_KEY_Y -> 'y';
+                    case GLFW_KEY_Z -> 'z';
+
+                    case GLFW_KEY_0 -> '0';
+                    case GLFW_KEY_1 -> '1';
+                    case GLFW_KEY_2 -> '2';
+                    case GLFW_KEY_3 -> '3';
+                    case GLFW_KEY_4-> '4';
+                    case GLFW_KEY_5 -> '5';
+
+                    default -> '?';
+                };
+                if(c!='?') typedText+=c;
+                if(key == GLFW_KEY_ENTER) typedText += "\n> ";
+                if(key == GLFW_KEY_SPACE) typedText += " ";
+                if(key == GLFW_KEY_BACKSPACE && typedText.length()>0
+                        && typedText.charAt(typedText.length()-1) != ' '
+                        && typedText.charAt(typedText.length()-2) != '>'
+                        && typedText.charAt(typedText.length()-3) != '\n'
+                ) typedText = typedText.substring(0, typedText.length()-1);
+
+            }
         });
 
         //////////////////////////////////////////////////////////////////////////////////////
@@ -192,9 +244,17 @@ public class Engine {
                 "shader/world.vert",
                 "shader/world.frag"
         );
-        SHADER_POST_DEFAULT = new Shader(
+        SHADER_POST_CINEMATIC = new Shader(
                 "shader/post/advanced.vert",
                 "shader/post/advanced.frag"
+        );
+        SHADER_POST_NONE = new Shader(
+                "shader/post/default.vert",
+                "shader/post/none.frag"
+        );
+        SHADER_POST_LITE = new Shader(
+                "shader/post/default.vert",
+                "shader/post/default.frag"
         );
         SHADER_MENU_DEFAULT = new Shader(
                 "shader/menu.vert",
@@ -204,9 +264,9 @@ public class Engine {
         //////////////////////////////////////////////////////////////////////////////////////
 
         Log.info("Initializing Textures...");
-        TEXTURE_BACKROOMS_WALL = new Texture("textures/wall.png",GL_TEXTURE1 );
-        TEXTURE_BACKROOMS_CEILING = new Texture("textures/ceiling.png",GL_TEXTURE2 );
-        TEXTURE_BACKROOMS_FLOOR = new Texture("textures/carpet.png", GL_TEXTURE3);
+        TEXTURE_BACKROOMS_WALL = new Texture("textures/STRUCTURE_WALL.png",GL_TEXTURE1 );
+        TEXTURE_BACKROOMS_CEILING = new Texture("textures/STRUCTURE_CEILING.png",GL_TEXTURE2 );
+        TEXTURE_BACKROOMS_FLOOR = new Texture("textures/STRUCTURE_FLOOR.png", GL_TEXTURE3);
 
         //////////////////////////////////////////////////////////////////////////////////////
         Log.info("Initializing Matrix...");
@@ -235,6 +295,17 @@ public class Engine {
         return new Matrix4f().perspective((float) Math.toRadians(fov), width/height, 0.1f, viewdistance);
     }
 
+    public String getTypedText(){
+        return typedText;
+    }
+
+    public void clearTypedText(){
+        typedText = "> ";
+    }
+
+    public void setPostShader(int i){
+        this.postShaderNum = i;
+    }
 
     public boolean render(ArrayList<Chunk> chunks, Vector3f position, Vector3f direction){
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -284,9 +355,14 @@ public class Engine {
         glClearColor(0.0f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        SHADER_POST_DEFAULT.use();
-        SHADER_POST_DEFAULT.setVector2f("iResolution", new Vector2f(windowWidth, windowHeight));
-        SHADER_POST_DEFAULT.setFloat("iTime", (float) glfwGetTime());
+        Shader s = switch (postShaderNum){
+            case 0 -> SHADER_POST_NONE;
+            case 1 -> SHADER_POST_LITE;
+            default -> SHADER_POST_CINEMATIC;
+        };
+        s.use();
+        s.setVector2f("iResolution", new Vector2f(windowWidth, windowHeight));
+        s.setFloat("iTime", (float) glfwGetTime());
         glBindVertexArray(VAO_POST_QUAD);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, FRAMEBUFFER_COLORBUFFER);
@@ -305,7 +381,7 @@ public class Engine {
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // First Pass
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        //glBindFramebuffer(GL_FRAMEBUFFER, FRAMEBUFFER);
+        glBindFramebuffer(GL_FRAMEBUFFER, FRAMEBUFFER);
         glDisable(GL_DEPTH_TEST);
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -320,10 +396,9 @@ public class Engine {
         menuTexture = glGenTextures();
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, menuTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, windowWidth, windowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, buffer);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, TextToTexture.getWidth(), TextToTexture.getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
         glBindVertexArray(VAO_POST_QUAD);
         glDrawArrays(GL_TRIANGLES, 0, 6);
         glBindVertexArray(0);
@@ -331,21 +406,26 @@ public class Engine {
         buffer.clear();
         glDeleteTextures(menuTexture);
 
-        /*/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // Second Pass
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
         glClear(GL_COLOR_BUFFER_BIT);
 
-        SHADER_POST_DEFAULT.use();
-        SHADER_POST_DEFAULT.setVector2f("iResolution", new Vector2f(windowWidth, windowHeight));
-        SHADER_POST_DEFAULT.setFloat("iTime", (float) glfwGetTime());
+        Shader s = switch (postShaderNum){
+            case 0 -> SHADER_POST_NONE;
+            case 1 -> SHADER_POST_LITE;
+            default -> SHADER_POST_CINEMATIC;
+        };
+        s.use();
+        s.setVector2f("iResolution", new Vector2f(windowWidth, windowHeight));
+        s.setFloat("iTime", (float) glfwGetTime());
         glBindVertexArray(VAO_POST_QUAD);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, FRAMEBUFFER_COLORBUFFER);
         glDrawArrays(GL_TRIANGLES, 0, 6);
         glBindVertexArray(0);
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -374,6 +454,8 @@ public class Engine {
         if(key == Key.TURN_RIGHT) return glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS;
         if(key == Key.SPRINT) return glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS;
         if(key == Key.CROUCH) return glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS;
+        if(key == Key.TERMINAL) return glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS;
+        if(key == Key.ENTER) return glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS;
         return false;
     }
 

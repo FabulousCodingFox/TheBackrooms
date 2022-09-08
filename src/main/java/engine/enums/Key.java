@@ -6,5 +6,7 @@ public enum Key {
     TURN_LEFT,
     TURN_RIGHT,
     SPRINT,
-    CROUCH
+    CROUCH,
+    TERMINAL,
+    ENTER
 }

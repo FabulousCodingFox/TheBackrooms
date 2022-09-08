@@ -8,7 +8,7 @@ uniform float iTime;
 uniform sampler2D screenTexture;
 
 const float vertJerkOpt = 1.0;
-const float vertMovementOpt = 1.0;
+const float vertMovementOpt = 0.0;
 const float bottomStaticOpt = 1.0;
 const float scalinesOpt = 1.0;
 const float rgbOffsetOpt = 1.0;
