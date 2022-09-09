@@ -18,7 +18,7 @@ public class Client {
     private Thread chunkThread;
 
     private ArrayList<Chunk> chunks, chunksToDestroy, chunksToRender;
-    private final int playerRenderDistance = 6;
+    private int playerRenderDistance = 6;
 
     public Client(){
         engine = new Engine(1280,960, "The Backrooms");
@@ -69,6 +69,15 @@ public class Client {
                     if(cmd.endsWith("0")) engine.setPostShader(0);
                     if(cmd.endsWith("1")) engine.setPostShader(1);
                     if(cmd.endsWith("2")) engine.setPostShader(2);
+                }
+                if(cmd.startsWith("rd ") && cmd.split(" ").length == 2){
+                    try{
+                        int number = Integer.parseInt(cmd.split(" ")[1]);
+                        System.out.println(number);
+                        playerRenderDistance = number;
+                    }catch (NumberFormatException ex){
+                        ex.printStackTrace();
+                    }
                 }
 
                 engine.clearTypedText();
