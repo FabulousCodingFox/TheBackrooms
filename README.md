@@ -4,14 +4,14 @@
 
 # KeyBinds
 
-Tab: Go back to console
-Esc: Close
-WASD: Move
+Tab: Go back to console<br>
+Esc: Close<br>
+WASD: Move<br>
 Mouse: Look around
 
 # Console commands
-'start': Starts the game
-'exit': Closes the game
-'shader <int>': Changes between shaders (0=None,1=Default,2=Cinematic)
-'rd <int>': Changes the render distance
-'light <int>': Toggles the lights (0=Off,1=On)
+"start": Starts the game<br>
+"exit": Closes the game<br>
+"shader <int>": Changes between shaders (0=None,1=Default,2=Cinematic)<br>
+"rd <int>": Changes the render distance<br>
+"light <int>": Toggles the lights (0=Off,1=On)
