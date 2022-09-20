@@ -11,14 +11,18 @@ public class Client {
     private Engine engine;
 
     private Vector3f playerPosition, playerLookAt, playerPrevPosition;
-    private double playerRotation;
+    private double playerCrouchAnim;
+    private double yaw, pitch;
 
     private float playerWalkSpeed, playerSprintSpeed, playerTurnSpeed, playerCrouchSpeed;
 
     private Thread chunkThread;
 
     private ArrayList<Chunk> chunks, chunksToDestroy, chunksToRender;
-    private final int playerRenderDistance = 6;
+
+    private int playerRenderDistance = 3;
+
+    public final Vector3f worldUp = new Vector3f(0,1,0);
 
     public Client(){
         engine = new Engine(1280,960, "The Backrooms");
@@ -26,12 +30,15 @@ public class Client {
         playerPosition = new Vector3f(0, 0, 0);
         playerPrevPosition = new Vector3f(0, 0, 0);
         playerLookAt = new Vector3f(0, 0, 1);
-        playerRotation = 0d;
+        yaw = 0d;
+        pitch = 0d;
 
         playerWalkSpeed = 2f;
         playerSprintSpeed = playerWalkSpeed * 2f;
-        playerTurnSpeed = 90f;
+        playerTurnSpeed = 25f;
         playerCrouchSpeed = playerWalkSpeed / 2f;
+
+        playerCrouchAnim = 0;
 
         chunks = new ArrayList<>();
         chunksToDestroy = new ArrayList<>();
@@ -65,10 +72,18 @@ public class Client {
 
                 String cmd = engine.getTypedText().split("\n")[0].substring(2);
                 if(cmd.equalsIgnoreCase("start")) return false;
-                if(cmd.startsWith("shader ")){
+                if(cmd.equalsIgnoreCase("exit")) return true;
+                if(cmd.startsWith("shader ") && cmd.split(" ").length == 2){
                     if(cmd.endsWith("0")) engine.setPostShader(0);
                     if(cmd.endsWith("1")) engine.setPostShader(1);
                     if(cmd.endsWith("2")) engine.setPostShader(2);
+                }
+                if(cmd.startsWith("rd ") && cmd.split(" ").length == 2){
+                    playerRenderDistance = Integer.parseInt(cmd.split(" ")[1]);
+                }
+                if(cmd.startsWith("light ") && cmd.split(" ").length == 2){
+                    if(cmd.endsWith("0")) engine.setLightingEnabled(false);
+                    if(cmd.endsWith("1")) engine.setLightingEnabled(true);
                 }
 
                 engine.clearTypedText();
@@ -82,8 +97,20 @@ public class Client {
 
     public boolean backrooms(){
         boolean running = true;
+
+        double timestamp = engine.getTime();
+        int fps = 0;
+
         while (running) {
             try {
+                if(engine.getTime()-timestamp > 1d){
+                    timestamp = engine.getTime();
+                    System.out.println("[FPS]: "+fps);
+                    fps = 0;
+                }
+
+                fps++;
+
                 // Update Chunks
                 ArrayList<Chunk> chunkToRender = new ArrayList<>(chunksToRender);
                 for (Chunk chunk : chunkToRender) {
@@ -103,39 +130,64 @@ public class Client {
             // Event Queue
             float deltaTime = engine.getFrameTime();
 
+            double mouseX = engine.getMouseMoveX();
+            double mouseY = engine.getMouseMoveY();
+            yaw = yaw + mouseX * playerTurnSpeed * deltaTime;
+            pitch = pitch - mouseY * playerTurnSpeed * deltaTime;
+
+            if(pitch < -90) pitch=-90;
+            if(pitch > 90) pitch=90;
+            if(yaw >= 360) yaw-=360;
+            if(yaw < 0) yaw+=360;
+
+            Vector3f front = new Vector3f();
+            front.x = (float) Math.cos(Math.toRadians(yaw)) * (float) Math.cos(Math.toRadians(pitch));
+            front.y = (float) Math.sin(Math.toRadians(pitch));
+            front.z = (float) Math.sin(Math.toRadians(yaw)) * (float) Math.cos(Math.toRadians(pitch));
+            playerLookAt = front.normalize();
+
             boolean keyWalkForward = engine.getIfKeyIsPressed(Key.WALK_FORWARD);
             boolean keyWalkBackward = engine.getIfKeyIsPressed(Key.WALK_BACKWARD);
-            boolean keyTurnLeft = engine.getIfKeyIsPressed(Key.TURN_LEFT);
-            boolean keyTurnRight = engine.getIfKeyIsPressed(Key.TURN_RIGHT);
+            boolean keyWalkLeft = engine.getIfKeyIsPressed(Key.WALK_LEFT);
+            boolean keyWalkRight = engine.getIfKeyIsPressed(Key.WALK_RIGHT);
             boolean keySprint = engine.getIfKeyIsPressed(Key.SPRINT);
             boolean keyCrouch = engine.getIfKeyIsPressed(Key.CROUCH);
 
             boolean keyTerminal = engine.getIfKeyIsPressed(Key.TERMINAL);
             if(keyTerminal) return false;
 
-            if(keyTurnLeft || keyTurnRight){
-                playerRotation += (keyTurnLeft ? -1 : 1) * playerTurnSpeed * deltaTime;
-                if(playerRotation >= 360) playerRotation -= 360;
-                if(playerRotation < 0) playerRotation += 360;
-                playerLookAt = new Vector3f((float) Math.sin(-Math.toRadians(playerRotation)), 0, (float) Math.cos(-Math.toRadians(playerRotation)));
-                playerLookAt.normalize();
+            if(keyCrouch && playerCrouchAnim>-0.3){
+                playerCrouchAnim-= 0.3 * (deltaTime/0.2);
+            }
+            else if (!keyCrouch && playerCrouchAnim<0) {
+                playerCrouchAnim+= 0.3 * (deltaTime/0.2);
             }
 
-            if(keyWalkForward || keyWalkBackward) {
+
+            playerPosition.y = (float) playerCrouchAnim;
+
+            if(keyWalkForward || keyWalkBackward || keyWalkLeft || keyWalkRight) {
                 float speed = keySprint ? playerSprintSpeed : playerWalkSpeed;
-                float multiplier = (keyWalkForward ? 1 : -1) * deltaTime;
+                float multiplier = deltaTime;
                 if (keySprint && !keyCrouch) multiplier *= playerSprintSpeed;
                 else if (!keySprint && keyCrouch) multiplier *= playerCrouchSpeed;
                 else if (keySprint && keyCrouch) multiplier *= playerCrouchSpeed;
                 else multiplier *= playerWalkSpeed;
-                playerPosition.add(new Vector3f(playerLookAt).mul(multiplier));
+
+                Vector3f ns = new Vector3f(playerLookAt.x, 0, playerLookAt.z).mul(keyWalkForward?1:(keyWalkBackward?-1:0));
+                Vector3f ow = new Vector3f(playerLookAt.x, 0, playerLookAt.z).cross(worldUp).mul(keyWalkRight?0.5f:(keyWalkLeft?-0.5f:0));
+                Vector3f dir = ns.add(ow).normalize().mul(multiplier);
+                Vector3f next = new Vector3f(playerPosition).add(dir);
+
+                playerPosition = next;
             }
 
             // Render Queue
             running = engine.render(
                     new ArrayList<>(chunks).stream().filter(Chunk::isReady).collect(Collectors.toCollection(ArrayList::new)),
                     playerPosition,
-                    playerLookAt
+                    playerLookAt,
+                    playerRenderDistance
             );
 
             if((int)(playerPosition.x/Chunk.SIZE)!=(int)(playerPrevPosition.x/Chunk.SIZE) || (int)(playerPosition.z/Chunk.SIZE)!=(int)(playerPrevPosition.z/Chunk.SIZE)){
@@ -177,15 +229,22 @@ public class Client {
             if(chunk.getMesh() != null) continue;
 
             int sides = 0;
-            Chunk[] neighbors = new Chunk[4];
+            Chunk[] neighbors = new Chunk[8];
             for(Chunk search : chunks) {
-                if(search.getX()==chunk.getX() && search.getY()==chunk.getY()-1){ sides++;neighbors[0] = search; }
-                if(search.getX()==chunk.getX()-1 && search.getY()==chunk.getY()){ sides++;neighbors[1] = search; }
-                if(search.getX()==chunk.getX()+1 && search.getY()==chunk.getY()){ sides++;neighbors[2] = search; }
-                if(search.getX()==chunk.getX() && search.getY()==chunk.getY()+1){ sides++;neighbors[3] = search; }
+                //px_pz, px_nz, px_mz, mx_pz, mx_nz, mx_mz, nx_pz, nx_mz
+                if(search.getX()==chunk.getX()+1 && search.getY()==chunk.getY()+1){ sides++;neighbors[0] = search; } //px_pz
+                if(search.getX()==chunk.getX()+1 && search.getY()==chunk.getY())  { sides++;neighbors[1] = search; } //px_nz
+                if(search.getX()==chunk.getX()+1 && search.getY()==chunk.getY()-1){ sides++;neighbors[2] = search; } //px_mz
+
+                if(search.getX()==chunk.getX()-1 && search.getY()==chunk.getY()+1){ sides++;neighbors[3] = search; } //mx_pz
+                if(search.getX()==chunk.getX()-1 && search.getY()==chunk.getY())  { sides++;neighbors[4] = search; } //mx_nz
+                if(search.getX()==chunk.getX()-1 && search.getY()==chunk.getY()-1){ sides++;neighbors[5] = search; } //mx_mz
+
+                if(search.getX()==chunk.getX() && search.getY()==chunk.getY()+1){ sides++;neighbors[6] = search; } //nx_pz
+                if(search.getX()==chunk.getX() && search.getY()==chunk.getY()-1){ sides++;neighbors[7] = search; } //nx_mz
             }
             chunk.setNeighbors(neighbors);
-            if(sides == 4) {
+            if(sides == 8) {
                 chunksToGenerate.add(chunk);
             }
         }
@@ -205,11 +264,19 @@ public class Client {
             if(chunk.getNeighbors()[1].getCube(0,0)==null){ chunk.getNeighbors()[1].generateTerrain();}
             if(chunk.getNeighbors()[2].getCube(0,0)==null){ chunk.getNeighbors()[2].generateTerrain();}
             if(chunk.getNeighbors()[3].getCube(0,0)==null){ chunk.getNeighbors()[3].generateTerrain();}
-            chunk.generateMesh( // -z -x +x +z
-                    chunk.getNeighbors()[2],
+            if(chunk.getNeighbors()[4].getCube(0,0)==null){ chunk.getNeighbors()[4].generateTerrain();}
+            if(chunk.getNeighbors()[5].getCube(0,0)==null){ chunk.getNeighbors()[5].generateTerrain();}
+            if(chunk.getNeighbors()[6].getCube(0,0)==null){ chunk.getNeighbors()[6].generateTerrain();}
+            if(chunk.getNeighbors()[7].getCube(0,0)==null){ chunk.getNeighbors()[7].generateTerrain();}
+            chunk.generateMesh(
+                    chunk.getNeighbors()[0],
                     chunk.getNeighbors()[1],
+                    chunk.getNeighbors()[2],
                     chunk.getNeighbors()[3],
-                    chunk.getNeighbors()[0]
+                    chunk.getNeighbors()[4],
+                    chunk.getNeighbors()[5],
+                    chunk.getNeighbors()[6],
+                    chunk.getNeighbors()[7]
             );
             chunksToRender.add(chunk);
             chunk.setNeighbors(null);
