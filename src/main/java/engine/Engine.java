@@ -490,6 +490,7 @@ public class Engine {
         if(key == Key.CROUCH) return glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS;
         if(key == Key.TERMINAL) return glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS;
         if(key == Key.ENTER) return glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS;
+        if(key == Key.JUMP) return glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS;
         return false;
     }
 

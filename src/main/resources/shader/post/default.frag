@@ -29,7 +29,7 @@ void main(){
         float apply = abs(sin(gl_FragCoord.y+sin(iTime))*0.5*scan);
 
         // Chromatic aberration
-        vec2 chrom = vec2(mod(abs(sin(iTime)*2.0), 0.01), 0.0); // Strength of the color shift
+        vec2 chrom = vec2(mod(abs(sin(iTime)*2.0), 0.008), 0.0); // Strength of the color shift
         vec3 col;
         col.r       = texture(screenTexture, vec2(uv.x+chrom.x, uv.y)).r;
         col.g       = texture(screenTexture, vec2(uv.x, uv.y)).g;

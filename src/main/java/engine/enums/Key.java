@@ -8,5 +8,6 @@ public enum Key {
     SPRINT,
     CROUCH,
     TERMINAL,
-    ENTER
+    ENTER,
+    JUMP
 }

@@ -161,6 +161,7 @@ public class Client {
             boolean keyWalkRight = engine.getIfKeyIsPressed(Key.WALK_RIGHT);
             boolean keySprint = engine.getIfKeyIsPressed(Key.SPRINT);
             boolean keyCrouch = engine.getIfKeyIsPressed(Key.CROUCH);
+            boolean keyJump = engine.getIfKeyIsPressed(Key.JUMP);
 
             boolean keyTerminal = engine.getIfKeyIsPressed(Key.TERMINAL);
             if(keyTerminal) return false;
@@ -188,6 +189,8 @@ public class Client {
 
                 playerPosition = new Vector3f(playerPosition).add(dir);
             }
+
+            //if(keyJump) playerPosition.add(0, 10*deltaTime, 0);
 
             // View Bobbing
 
@@ -226,7 +229,7 @@ public class Client {
             float bobbingAmountY = (float) Math.sin(bobbingOffsetY) * bobbingSpeed;
             float bobbingAmountX = (float) Math.sin(bobbingOffsetX) * (bobbingSpeed * 0.5f);
 
-            Vector3f camLocation = new Vector3f(playerPosition.x, (float) playerCrouchAnim + bobbingAmountY, playerPosition.z);
+            Vector3f camLocation = new Vector3f(playerPosition.x, playerPosition.y + (float) playerCrouchAnim + bobbingAmountY, playerPosition.z);
             camLocation.add(new Vector3f(playerLookAt).cross(worldUp).mul(bobbingAmountX));
 
             // Render Queue
