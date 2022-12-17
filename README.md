@@ -1,6 +1,6 @@
 # What would The Backrooms look like as an old school 90s computer game? [WIP]
 
-![image](https://user-images.githubusercontent.com/78906517/191827187-e20d3fd9-2988-427c-9f2a-04e137782168.png)
+![Unbenannt](https://user-images.githubusercontent.com/78906517/208252518-24b1a6f7-9649-48cb-919d-74ed0c65d752.png)
 
 # KeyBinds
 
