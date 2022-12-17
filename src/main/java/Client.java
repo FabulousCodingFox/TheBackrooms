@@ -8,19 +8,19 @@ import java.util.ConcurrentModificationException;
 import java.util.stream.Collectors;
 
 public class Client {
-    private Engine engine;
+    private final Engine engine;
 
     private Vector3f playerPosition, playerLookAt, playerPrevPosition;
     private double playerCrouchAnim;
     private double yaw, pitch;
 
-    private float playerWalkSpeed, playerSprintSpeed, playerTurnSpeed, playerCrouchSpeed;
+    private final float playerWalkSpeed, playerSprintSpeed, playerTurnSpeed, playerCrouchSpeed;
 
     private Thread chunkThread;
 
-    private ArrayList<Chunk> chunks, chunksToDestroy, chunksToRender;
+    private final ArrayList<Chunk> chunks, chunksToDestroy, chunksToRender;
 
-    private int playerRenderDistance = 3;
+    private int playerRenderDistance = 6;
 
     public final Vector3f worldUp = new Vector3f(0,1,0);
 
