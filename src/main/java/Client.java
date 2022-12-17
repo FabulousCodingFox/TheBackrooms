@@ -16,6 +16,7 @@ public class Client {
 
     private final float playerWalkSpeed, playerSprintSpeed, playerTurnSpeed, playerCrouchSpeed;
 
+    private float bobbingSpeed = 0f;
     private float bobbingOffsetX = 0.0f, bobbingOffsetY = 0.0f;
 
     private Thread chunkThread;
@@ -190,10 +191,29 @@ public class Client {
 
             // View Bobbing
 
-            float bobbingSpeed = 0f;
-            if(keyCrouch){ bobbingSpeed = 0f; }
-            else if(keySprint && (keyWalkForward || keyWalkBackward || keyWalkLeft || keyWalkRight)){ bobbingSpeed = 0.025f; }
-            else if(keyWalkForward || keyWalkBackward || keyWalkLeft || keyWalkRight){ bobbingSpeed = 0.0125f; }
+            float bobbingTransitionSpeed = 0.05f * deltaTime;
+
+            if(keyCrouch){
+                bobbingSpeed -= bobbingTransitionSpeed;
+                if(bobbingSpeed < 0) bobbingSpeed = 0f;
+            }
+            else if(keySprint && (keyWalkForward || keyWalkBackward || keyWalkLeft || keyWalkRight)){
+                bobbingSpeed += bobbingTransitionSpeed;
+                if(bobbingSpeed > 0.025f) bobbingSpeed = 0.025f;
+            }
+            else if(keyWalkForward || keyWalkBackward || keyWalkLeft || keyWalkRight){
+                if(bobbingSpeed < 0.0125f) bobbingSpeed += bobbingTransitionSpeed;
+                if(bobbingSpeed > 0.0125f) bobbingSpeed -= bobbingTransitionSpeed;
+                if(bobbingSpeed + bobbingTransitionSpeed > bobbingSpeed && bobbingSpeed - bobbingTransitionSpeed < bobbingSpeed) bobbingSpeed = 0.0125f;
+            }
+            else{
+                bobbingSpeed -= bobbingTransitionSpeed;
+                if(bobbingSpeed < 0) bobbingSpeed = 0f;
+            }
+            if(bobbingSpeed == 0f) {
+                bobbingOffsetX = 0;
+                bobbingOffsetY = 0;
+            }
 
             bobbingOffsetY += 0.1f;
             if (bobbingOffsetY > Math.PI * 2) {
