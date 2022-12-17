@@ -16,6 +16,8 @@ public class Client {
 
     private final float playerWalkSpeed, playerSprintSpeed, playerTurnSpeed, playerCrouchSpeed;
 
+    private float bobbingOffsetX = 0.0f, bobbingOffsetY = 0.0f;
+
     private Thread chunkThread;
 
     private final ArrayList<Chunk> chunks, chunksToDestroy, chunksToRender;
@@ -162,15 +164,14 @@ public class Client {
             boolean keyTerminal = engine.getIfKeyIsPressed(Key.TERMINAL);
             if(keyTerminal) return false;
 
+            // Crouching
+
             if(keyCrouch && playerCrouchAnim>-0.3){
                 playerCrouchAnim-= 0.3 * (deltaTime/0.2);
             }
             else if (!keyCrouch && playerCrouchAnim<0) {
                 playerCrouchAnim+= 0.3 * (deltaTime/0.2);
             }
-
-
-            playerPosition.y = (float) playerCrouchAnim;
 
             if(keyWalkForward || keyWalkBackward || keyWalkLeft || keyWalkRight) {
                 float speed = keySprint ? playerSprintSpeed : playerWalkSpeed;
@@ -183,15 +184,35 @@ public class Client {
                 Vector3f ns = new Vector3f(playerLookAt.x, 0, playerLookAt.z).mul(keyWalkForward?1:(keyWalkBackward?-1:0));
                 Vector3f ow = new Vector3f(playerLookAt.x, 0, playerLookAt.z).cross(worldUp).mul(keyWalkRight?0.5f:(keyWalkLeft?-0.5f:0));
                 Vector3f dir = ns.add(ow).normalize().mul(multiplier);
-                Vector3f next = new Vector3f(playerPosition).add(dir);
 
-                playerPosition = next;
+                playerPosition = new Vector3f(playerPosition).add(dir);
             }
+
+            // View Bobbing
+
+            float bobbingSpeed = 0f;
+            if(keyCrouch){ bobbingSpeed = 0f; }
+            else if(keySprint && (keyWalkForward || keyWalkBackward || keyWalkLeft || keyWalkRight)){ bobbingSpeed = 0.025f; }
+            else if(keyWalkForward || keyWalkBackward || keyWalkLeft || keyWalkRight){ bobbingSpeed = 0.0125f; }
+
+            bobbingOffsetY += 0.1f;
+            if (bobbingOffsetY > Math.PI * 2) {
+                bobbingOffsetY -= Math.PI * 2;
+            }
+            bobbingOffsetX += (0.1f / 2);
+            if (bobbingOffsetX > Math.PI * 2) {
+                bobbingOffsetX -= Math.PI * 2;
+            }
+            float bobbingAmountY = (float) Math.sin(bobbingOffsetY) * bobbingSpeed;
+            float bobbingAmountX = (float) Math.sin(bobbingOffsetX) * (bobbingSpeed * 0.5f);
+
+            Vector3f camLocation = new Vector3f(playerPosition.x, (float) playerCrouchAnim + bobbingAmountY, playerPosition.z);
+            camLocation.add(new Vector3f(playerLookAt).cross(worldUp).mul(bobbingAmountX));
 
             // Render Queue
             running = engine.render(
                     new ArrayList<>(chunks).stream().filter(Chunk::isReady).collect(Collectors.toCollection(ArrayList::new)),
-                    playerPosition,
+                    camLocation,
                     playerLookAt,
                     playerRenderDistance
             );
