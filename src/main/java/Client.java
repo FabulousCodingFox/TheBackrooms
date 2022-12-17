@@ -79,7 +79,13 @@ public class Client {
                     if(cmd.endsWith("2")) engine.setPostShader(2);
                 }
                 if(cmd.startsWith("rd ") && cmd.split(" ").length == 2){
-                    playerRenderDistance = Integer.parseInt(cmd.split(" ")[1]);
+                    try{
+                        int number = Integer.parseInt(cmd.split(" ")[1]);
+                        System.out.println(number);
+                        playerRenderDistance = number;
+                    }catch (NumberFormatException ex){
+                        ex.printStackTrace();
+                    }
                 }
                 if(cmd.startsWith("light ") && cmd.split(" ").length == 2){
                     if(cmd.endsWith("0")) engine.setLightingEnabled(false);
