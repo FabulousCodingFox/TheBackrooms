@@ -57,15 +57,37 @@ public class Chunk {
         return cubes[x][y];
     }
 
-    private boolean getIfCubeIsTransparent(int x, int y, Chunk px, Chunk mx, Chunk pz, Chunk mz){
-        if(x>=SIZE) return px.getCube(x-SIZE,y)==Cube.NORMAL_VOID;
-        if(x<0) return mx.getCube(x+SIZE,y)==Cube.NORMAL_VOID;
-        if(y>=SIZE) return pz.getCube(x,y-SIZE)==Cube.NORMAL_VOID;
-        if(y<0) return mz.getCube(x,y+SIZE)==Cube.NORMAL_VOID;
+    private boolean getIfCubeIsTransparent(
+            int x, int y,
+            Chunk px_pz, Chunk px_nz, Chunk px_mz,
+            Chunk mx_pz, Chunk mx_nz, Chunk mx_mz,
+            Chunk nx_pz, Chunk nx_mz){
+
+        if(x>=SIZE && y>=SIZE) return px_pz.getCube(x-SIZE,y-SIZE) == Cube.NORMAL_VOID;
+        if(x>=SIZE && y<0)     return px_mz.getCube(x-SIZE,y+SIZE) == Cube.NORMAL_VOID;
+        if(x>=SIZE)            return px_nz.getCube(x-SIZE,y)         == Cube.NORMAL_VOID;
+
+        if(x<0 && y>=SIZE) return mx_pz.getCube(x+SIZE,y-SIZE) == Cube.NORMAL_VOID;
+        if(x<0 && y<0)     return mx_mz.getCube(x+SIZE,y+SIZE) == Cube.NORMAL_VOID;
+        if(x<0)            return mx_nz.getCube(x+SIZE,y)         == Cube.NORMAL_VOID;
+
+        if(y>=SIZE) return nx_pz.getCube(x,y-SIZE) == Cube.NORMAL_VOID;
+        if(y<0)     return nx_mz.getCube(x,y+SIZE) == Cube.NORMAL_VOID;
+
         return this.getCube(x,y)==Cube.NORMAL_VOID;
     }
 
-    public void generateMesh(Chunk px, Chunk mx, Chunk pz, Chunk mz){
+    private float getAO(boolean side1, boolean side2, boolean corner){
+        float sides = 0;
+        if(side1 && side2) {
+            sides =  (3 - ((side1?1:0) + (side2?1:0) + (corner?1:0))) / 3f;
+        }
+        return 1f - sides;
+    }
+
+    public void generateMesh(Chunk px_pz, Chunk px_nz, Chunk px_mz,
+                             Chunk mx_pz, Chunk mx_nz, Chunk mx_mz,
+                             Chunk nx_pz, Chunk nx_mz){
         ArrayList<Float> vertices = new ArrayList<>();
 
         for(int x = 0; x < SIZE; x++){
@@ -73,63 +95,68 @@ public class Chunk {
                 int xp = x + chunkX * SIZE;
                 int yp = y + chunkY * SIZE;
 
+                float AO_MM = 1f;
+                float AO_MP = 1f;
+                float AO_PM = 1f;
+                float AO_PP = 1f;
+
                 if (cubes[x][y] == Cube.NORMAL_WALL) {
-                    if (getIfCubeIsTransparent(x + 1, y, px, mx, pz, mz)) {
+                    if (getIfCubeIsTransparent(x + 1, y, px_pz, px_nz, px_mz, mx_pz, mx_nz, mx_mz, nx_pz, nx_mz)) {
                         vertices.addAll(List.of(
-                                0.5f+xp, -0.5f, -0.5f+yp,  0.0f, 0.0f, 0.0f,
-                                0.5f+xp, -0.5f, 0.5f+yp,  1.0f, 0.0f, 0.0f,
-                                0.5f+xp,  0.5f, 0.5f+yp,  1.0f, 1.0f, 0.0f,
-                                0.5f+xp,  0.5f, 0.5f+yp,  1.0f, 1.0f, 0.0f,
-                                0.5f+xp,  0.5f, -0.5f+yp,  0.0f, 1.0f, 0.0f,
-                                0.5f+xp, -0.5f, -0.5f+yp,  0.0f, 0.0f, 0.0f
+                                0.5f+xp, -0.5f, -0.5f+yp,  0.0f, 0.0f, 0.0f, AO_PM,
+                                0.5f+xp, -0.5f, 0.5f+yp,  1.0f, 0.0f, 0.0f, AO_PP,
+                                0.5f+xp,  0.5f, 0.5f+yp,  1.0f, 1.0f, 0.0f, AO_PP,
+                                0.5f+xp,  0.5f, 0.5f+yp,  1.0f, 1.0f, 0.0f, AO_PP,
+                                0.5f+xp,  0.5f, -0.5f+yp,  0.0f, 1.0f, 0.0f, AO_PM,
+                                0.5f+xp, -0.5f, -0.5f+yp,  0.0f, 0.0f, 0.0f, AO_PM
                         ));
                     }
-                    if (getIfCubeIsTransparent(x - 1, y, px, mx, pz, mz)) {
+                    if (getIfCubeIsTransparent(x - 1, y, px_pz, px_nz, px_mz, mx_pz, mx_nz, mx_mz, nx_pz, nx_mz)) {
                         vertices.addAll(List.of(
-                                -0.5f+xp, -0.5f, -0.5f+yp,  0.0f, 0.0f, 0.0f,
-                                -0.5f+xp, -0.5f, 0.5f+yp,  1.0f, 0.0f, 0.0f,
-                                -0.5f+xp,  0.5f, 0.5f+yp,  1.0f, 1.0f, 0.0f,
-                                -0.5f+xp,  0.5f, 0.5f+yp,  1.0f, 1.0f, 0.0f,
-                                -0.5f+xp,  0.5f, -0.5f+yp,  0.0f, 1.0f, 0.0f,
-                                -0.5f+xp, -0.5f, -0.5f+yp,  0.0f, 0.0f, 0.0f
+                                -0.5f+xp, -0.5f, -0.5f+yp,  0.0f, 0.0f, 0.0f, AO_MM,
+                                -0.5f+xp, -0.5f, 0.5f+yp,  1.0f, 0.0f, 0.0f, AO_MP,
+                                -0.5f+xp,  0.5f, 0.5f+yp,  1.0f, 1.0f, 0.0f, AO_MP,
+                                -0.5f+xp,  0.5f, 0.5f+yp,  1.0f, 1.0f, 0.0f, AO_MP,
+                                -0.5f+xp,  0.5f, -0.5f+yp,  0.0f, 1.0f, 0.0f, AO_MM,
+                                -0.5f+xp, -0.5f, -0.5f+yp,  0.0f, 0.0f, 0.0f, AO_MM
                         ));
                     }
-                    if (getIfCubeIsTransparent(x, y + 1, px, mx, pz, mz)) {
+                    if (getIfCubeIsTransparent(x, y + 1, px_pz, px_nz, px_mz, mx_pz, mx_nz, mx_mz, nx_pz, nx_mz)) {
                         vertices.addAll(List.of(
-                                -0.5f+xp, -0.5f, 0.5f+yp,  0.0f, 0.0f, 0.0f,
-                                0.5f+xp, -0.5f, 0.5f+yp,  1.0f, 0.0f, 0.0f,
-                                0.5f+xp,  0.5f, 0.5f+yp,  1.0f, 1.0f, 0.0f,
-                                0.5f+xp,  0.5f, 0.5f+yp,  1.0f, 1.0f, 0.0f,
-                                -0.5f+xp,  0.5f, 0.5f+yp,  0.0f, 1.0f, 0.0f,
-                                -0.5f+xp, -0.5f, 0.5f+yp,  0.0f, 0.0f, 0.0f
+                                -0.5f+xp, -0.5f, 0.5f+yp,  0.0f, 0.0f, 0.0f, AO_MP,
+                                0.5f+xp, -0.5f, 0.5f+yp,  1.0f, 0.0f, 0.0f, AO_PP,
+                                0.5f+xp,  0.5f, 0.5f+yp,  1.0f, 1.0f, 0.0f, AO_PP,
+                                0.5f+xp,  0.5f, 0.5f+yp,  1.0f, 1.0f, 0.0f, AO_PP,
+                                -0.5f+xp,  0.5f, 0.5f+yp,  0.0f, 1.0f, 0.0f, AO_MP,
+                                -0.5f+xp, -0.5f, 0.5f+yp,  0.0f, 0.0f, 0.0f, AO_MP
                         ));
                     }
-                    if (getIfCubeIsTransparent(x, y - 1, px, mx, pz, mz)) {
+                    if (getIfCubeIsTransparent(x, y - 1, px_pz, px_nz, px_mz, mx_pz, mx_nz, mx_mz, nx_pz, nx_mz)) {
                         vertices.addAll(List.of(
-                                -0.5f+xp, -0.5f, -0.5f+yp,  0.0f, 0.0f, 0.0f,
-                                0.5f+xp, -0.5f, -0.5f+yp,  1.0f, 0.0f, 0.0f,
-                                0.5f+xp,  0.5f, -0.5f+yp,  1.0f, 1.0f, 0.0f,
-                                0.5f+xp,  0.5f, -0.5f+yp,  1.0f, 1.0f, 0.0f,
-                                -0.5f+xp,  0.5f, -0.5f+yp,  0.0f, 1.0f, 0.0f,
-                                -0.5f+xp, -0.5f, -0.5f+yp,  0.0f, 0.0f, 0.0f
+                                -0.5f+xp, -0.5f, -0.5f+yp,  0.0f, 0.0f, 0.0f, AO_MM,
+                                0.5f+xp, -0.5f, -0.5f+yp,  1.0f, 0.0f, 0.0f, AO_PM,
+                                0.5f+xp,  0.5f, -0.5f+yp,  1.0f, 1.0f, 0.0f, AO_PM,
+                                0.5f+xp,  0.5f, -0.5f+yp,  1.0f, 1.0f, 0.0f, AO_PM,
+                                -0.5f+xp,  0.5f, -0.5f+yp,  0.0f, 1.0f, 0.0f, AO_MM,
+                                -0.5f+xp, -0.5f, -0.5f+yp,  0.0f, 0.0f, 0.0f, AO_MM
                         ));
                     }
                 }
                 else if (cubes[x][y] == Cube.NORMAL_VOID) {
                     vertices.addAll(List.of(
-                            -0.5f+xp, -0.5f, -0.5f+yp, 0.0f, 0.0f, 0.2f,
-                            0.5f+xp, -0.5f, -0.5f+yp, 1.0f, 0.0f, 0.2f,
-                            0.5f+xp, -0.5f, 0.5f+yp, 1.0f, 1.0f, 0.2f,
-                            0.5f+xp, -0.5f, 0.5f+yp, 1.0f, 1.0f, 0.2f,
-                            -0.5f+xp, -0.5f, 0.5f+yp, 0.0f, 1.0f, 0.2f,
-                            -0.5f+xp, -0.5f, -0.5f+yp, 0.0f, 0.0f, 0.2f,
+                            -0.5f+xp, -0.5f, -0.5f+yp, 0.0f, 0.0f, 0.2f, AO_MM,
+                            0.5f+xp, -0.5f, -0.5f+yp, 1.0f, 0.0f, 0.2f, AO_PM,
+                            0.5f+xp, -0.5f, 0.5f+yp, 1.0f, 1.0f, 0.2f, AO_PP,
+                            0.5f+xp, -0.5f, 0.5f+yp, 1.0f, 1.0f, 0.2f, AO_PP,
+                            -0.5f+xp, -0.5f, 0.5f+yp, 0.0f, 1.0f, 0.2f, AO_MP,
+                            -0.5f+xp, -0.5f, -0.5f+yp, 0.0f, 0.0f, 0.2f, AO_MM,
 
-                            -0.5f+xp, 0.5f, -0.5f+yp, 0.0f, 0.0f, 0.1f,
-                            0.5f+xp, 0.5f, -0.5f+yp, 1.0f, 0.0f, 0.1f,
-                            0.5f+xp, 0.5f, 0.5f+yp, 1.0f, 1.0f, 0.1f,
-                            0.5f+xp, 0.5f, 0.5f+yp, 1.0f, 1.0f, 0.1f,
-                            -0.5f+xp, 0.5f, 0.5f+yp, 0.0f, 1.0f, 0.1f,
-                            -0.5f+xp, 0.5f, -0.5f+yp, 0.0f, 0.0f, 0.1f
+                            -0.5f+xp, 0.5f, -0.5f+yp, 0.0f, 0.0f, 0.1f, AO_MM,
+                            0.5f+xp, 0.5f, -0.5f+yp, 1.0f, 0.0f, 0.1f, AO_PM,
+                            0.5f+xp, 0.5f, 0.5f+yp, 1.0f, 1.0f, 0.1f, AO_PP,
+                            0.5f+xp, 0.5f, 0.5f+yp, 1.0f, 1.0f, 0.1f, AO_PP,
+                            -0.5f+xp, 0.5f, 0.5f+yp, 0.0f, 1.0f, 0.1f, AO_MP,
+                            -0.5f+xp, 0.5f, -0.5f+yp, 0.0f, 0.0f, 0.1f, AO_MM
                     ));
                 }
             }

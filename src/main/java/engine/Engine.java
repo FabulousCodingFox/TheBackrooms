@@ -37,6 +37,8 @@ public class Engine {
     private float deltaTime;
     private float lastFrame;
 
+    private double lastMouseXP, lastMouseYP, mouseOffX, mouseOffY;
+
     private final int VAO_WORLD, VAO_POST_QUAD, VBO_POST_QUAD;
 
     private int FRAMEBUFFER;
@@ -49,6 +51,7 @@ public class Engine {
     private int menuTexture;
 
     private int postShaderNum = 1;
+    private boolean lightingEnabled = true;
 
     private String typedText = "";
 
@@ -80,6 +83,15 @@ public class Engine {
         window = glfwCreateWindow(windowWidth, windowHeight, windowTitle, NULL, NULL);
         glfwMakeContextCurrent(window);
 
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        double[] a = new double[1];
+        double[] b = new double[1];
+        glfwGetCursorPos(window, a, b);
+        lastMouseXP = a[0];
+        lastMouseYP = b[0];
+        mouseOffX = 0d;
+        mouseOffY = 0d;
+
         //////////////////////////////////////////////////////////////////////////////////////
 
         Log.info("Setting GLFW window callbacks...");
@@ -104,11 +116,8 @@ public class Engine {
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glBindTexture(GL_TEXTURE_2D, 0);
             glBindRenderbuffer(GL_RENDERBUFFER, 0);
-
-
-
-
         });
+
         glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
             if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) glfwSetWindowShouldClose(window, true);
 
@@ -307,7 +316,11 @@ public class Engine {
         this.postShaderNum = i;
     }
 
-    public boolean render(ArrayList<Chunk> chunks, Vector3f position, Vector3f direction){
+    public void setLightingEnabled(boolean light){
+        lightingEnabled = light;
+    }
+
+    public boolean render(ArrayList<Chunk> chunks, Vector3f position, Vector3f direction, int renderDistance){
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
         if(glfwWindowShouldClose(window)) return false;
@@ -321,7 +334,7 @@ public class Engine {
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         glBindFramebuffer(GL_FRAMEBUFFER, FRAMEBUFFER);
         glEnable(GL_DEPTH_TEST);
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -335,15 +348,20 @@ public class Engine {
         SHADER_WORLD_STATIC_DEFAULT.setMatrix4f("projection", projectionMatrix);
         SHADER_WORLD_STATIC_DEFAULT.setMatrix4f("view", viewMatrix);
         SHADER_WORLD_STATIC_DEFAULT.setMatrix4f("model", modelMatrix);
+        SHADER_WORLD_STATIC_DEFAULT.setVector3f("camPos", position);
+        SHADER_WORLD_STATIC_DEFAULT.setInt("renderDistance", (renderDistance-1) * Chunk.SIZE);
+        SHADER_WORLD_STATIC_DEFAULT.setBool("lightingEnabled", lightingEnabled);
 
         for(Chunk chunk : chunks){
             glBindBuffer(GL_ARRAY_BUFFER, chunk.getVBO());
-            //   4   8   12  16  20  24
-            //   X   Y   Z   U   V   TEXID
-            glVertexAttribPointer(0, 3, GL_FLOAT, false, 24, 0);
+            //   4   8   12  16  20  24    28
+            //   X   Y   Z   U   V   TEXID AO
+            glVertexAttribPointer(0, 3, GL_FLOAT, false, 28, 0);
             glEnableVertexAttribArray(0); // Position
-            glVertexAttribPointer(1, 3, GL_FLOAT, false, 24, 12);
+            glVertexAttribPointer(1, 3, GL_FLOAT, false, 28, 12);
             glEnableVertexAttribArray(1); // Texture Coordinates + ID
+            glVertexAttribPointer(2, 1, GL_FLOAT, false, 28, 24);
+            glEnableVertexAttribArray(2); // AO
             glDrawArrays(GL_TRIANGLES, 0, chunk.getVertCount());
         }
 
@@ -368,7 +386,15 @@ public class Engine {
         glBindTexture(GL_TEXTURE_2D, FRAMEBUFFER_COLORBUFFER);
         glDrawArrays(GL_TRIANGLES, 0, 6);
         glBindVertexArray(0);
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        double[] a = new double[1];
+        double[] b = new double[1];
+        glfwGetCursorPos(window, a, b);
+        mouseOffX = a[0] - lastMouseXP;
+        mouseOffY = b[0] - lastMouseYP;
+        lastMouseXP = a[0];
+        lastMouseYP = b[0];
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -447,11 +473,19 @@ public class Engine {
         glfwTerminate();
     }
 
+    public double getMouseMoveX(){
+        return mouseOffX;
+    }
+
+    public double getMouseMoveY(){
+        return mouseOffY;
+    }
+
     public boolean getIfKeyIsPressed(Key key){
         if(key == Key.WALK_FORWARD) return glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS;
         if(key == Key.WALK_BACKWARD) return glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS;
-        if(key == Key.TURN_LEFT) return glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS;
-        if(key == Key.TURN_RIGHT) return glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS;
+        if(key == Key.WALK_LEFT) return glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS;
+        if(key == Key.WALK_RIGHT) return glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS;
         if(key == Key.SPRINT) return glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS;
         if(key == Key.CROUCH) return glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS;
         if(key == Key.TERMINAL) return glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS;

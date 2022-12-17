@@ -2,6 +2,7 @@ package engine;
 
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
+import org.joml.Vector3f;
 import utils.FileUtils;
 
 import java.io.IOException;
@@ -114,6 +115,9 @@ public class Shader {
      */
     public void setVector2f(String name, Vector2f value) {
         glUniform2fv(glGetUniformLocation(ID, name),new float[]{value.x, value.y} );
+    }
+    public void setVector3f(String name, Vector3f value) {
+        glUniform3fv(glGetUniformLocation(ID, name),new float[]{value.x, value.y, value.z} );
     }
 
     /*
