@@ -7,7 +7,9 @@
 Tab: Go back to console<br>
 Esc: Close<br>
 WASD: Move<br>
-Mouse: Look around
+Mouse: Look around<br>
+Control: Crouch<br>
+Space: Jump
 
 # Console commands
 "start": Starts the game<br>
