@@ -37,7 +37,7 @@ public class Chunk {
         Random random = new Random();
         for(int x=0; x<SIZE; x++){
             for(int y=0; y<SIZE; y++){
-                cubes[x][y] = random.nextInt(100) < 20 ? Cube.NORMAL_WALL : Cube.NORMAL_VOID;
+                cubes[x][y] = random.nextInt(100) < 20 ? Cube.NORMAL_WALL : Cube.NORMAL_HALLWAY;
             }
         }
     }
@@ -63,18 +63,18 @@ public class Chunk {
             Chunk mx_pz, Chunk mx_nz, Chunk mx_mz,
             Chunk nx_pz, Chunk nx_mz){
 
-        if(x>=SIZE && y>=SIZE) return px_pz.getCube(x-SIZE,y-SIZE) == Cube.NORMAL_VOID;
-        if(x>=SIZE && y<0)     return px_mz.getCube(x-SIZE,y+SIZE) == Cube.NORMAL_VOID;
-        if(x>=SIZE)            return px_nz.getCube(x-SIZE,y)         == Cube.NORMAL_VOID;
+        if(x>=SIZE && y>=SIZE) return px_pz.getCube(x-SIZE,y-SIZE) == Cube.NORMAL_HALLWAY;
+        if(x>=SIZE && y<0)     return px_mz.getCube(x-SIZE,y+SIZE) == Cube.NORMAL_HALLWAY;
+        if(x>=SIZE)            return px_nz.getCube(x-SIZE,y)         == Cube.NORMAL_HALLWAY;
 
-        if(x<0 && y>=SIZE) return mx_pz.getCube(x+SIZE,y-SIZE) == Cube.NORMAL_VOID;
-        if(x<0 && y<0)     return mx_mz.getCube(x+SIZE,y+SIZE) == Cube.NORMAL_VOID;
-        if(x<0)            return mx_nz.getCube(x+SIZE,y)         == Cube.NORMAL_VOID;
+        if(x<0 && y>=SIZE) return mx_pz.getCube(x+SIZE,y-SIZE) == Cube.NORMAL_HALLWAY;
+        if(x<0 && y<0)     return mx_mz.getCube(x+SIZE,y+SIZE) == Cube.NORMAL_HALLWAY;
+        if(x<0)            return mx_nz.getCube(x+SIZE,y)         == Cube.NORMAL_HALLWAY;
 
-        if(y>=SIZE) return nx_pz.getCube(x,y-SIZE) == Cube.NORMAL_VOID;
-        if(y<0)     return nx_mz.getCube(x,y+SIZE) == Cube.NORMAL_VOID;
+        if(y>=SIZE) return nx_pz.getCube(x,y-SIZE) == Cube.NORMAL_HALLWAY;
+        if(y<0)     return nx_mz.getCube(x,y+SIZE) == Cube.NORMAL_HALLWAY;
 
-        return this.getCube(x,y)==Cube.NORMAL_VOID;
+        return this.getCube(x,y)==Cube.NORMAL_HALLWAY;
     }
 
     private float getAO(boolean side1, boolean side2, boolean corner){
@@ -142,7 +142,7 @@ public class Chunk {
                         ));
                     }
                 }
-                else if (cubes[x][y] == Cube.NORMAL_VOID) {
+                else if (cubes[x][y] == Cube.NORMAL_HALLWAY) {
                     vertices.addAll(List.of(
                             -0.5f+xp, -0.5f, -0.5f+yp, 0.0f, 0.0f, 0.2f, AO_MM,
                             0.5f+xp, -0.5f, -0.5f+yp, 1.0f, 0.0f, 0.2f, AO_PM,

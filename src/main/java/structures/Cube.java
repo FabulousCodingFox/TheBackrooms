@@ -1,6 +1,7 @@
 package structures;
 
 public enum Cube {
-    NORMAL_VOID,
-    NORMAL_WALL
+    NORMAL_HALLWAY,
+    NORMAL_WALL,
+    EXIT
 }
