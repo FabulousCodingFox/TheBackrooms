@@ -92,6 +92,7 @@ public class Client {
                     if(cmd.endsWith("0")) engine.setPostShader(0);
                     if(cmd.endsWith("1")) engine.setPostShader(1);
                     if(cmd.endsWith("2")) engine.setPostShader(2);
+                    if(cmd.endsWith("3")) engine.setPostShader(3);
                 }
                 if(cmd.startsWith("rd ") && cmd.split(" ").length == 2){
                     try{

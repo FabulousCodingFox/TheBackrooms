@@ -45,7 +45,7 @@ public class Engine {
     private int FRAMEBUFFER_COLORBUFFER;
     private int FRAMEBUFFER_RENDERBUFFER1;
 
-    private final Shader SHADER_WORLD_STATIC_DEFAULT, SHADER_POST_NONE, SHADER_POST_LITE, SHADER_POST_CINEMATIC, SHADER_MENU_DEFAULT;
+    private final Shader SHADER_WORLD_STATIC_DEFAULT, SHADER_POST_NONE, SHADER_POST_LITE, SHADER_POST_CINEMATIC, SHADER_POST_GLICH, SHADER_MENU_DEFAULT;
 
     private final Texture TEXTURE_BACKROOMS_WALL, TEXTURE_BACKROOMS_FLOOR, TEXTURE_BACKROOMS_CEILING;
     private int menuTexture;
@@ -249,22 +249,32 @@ public class Engine {
         //////////////////////////////////////////////////////////////////////////////////////
 
         Log.info("Initializing Shaders...");
+        Log.info("SHADER_WORLD_STATIC_DEFAULT");
         SHADER_WORLD_STATIC_DEFAULT = new Shader(
                 "shader/world.vert",
                 "shader/world.frag"
         );
+        Log.info("SHADER_POST_CINEMATIC");
         SHADER_POST_CINEMATIC = new Shader(
                 "shader/post/advanced.vert",
                 "shader/post/advanced.frag"
         );
+        Log.info("SHADER_POST_NONE");
         SHADER_POST_NONE = new Shader(
                 "shader/post/default.vert",
                 "shader/post/none.frag"
         );
+        Log.info("SHADER_POST_LITE");
         SHADER_POST_LITE = new Shader(
                 "shader/post/default.vert",
                 "shader/post/default.frag"
         );
+        Log.info("SHADER_POST_GLICH");
+        SHADER_POST_GLICH = new Shader(
+                "shader/post/advanced.vert",
+                "shader/post/glitch.frag"
+        );
+        Log.info("SHADER_MENU_DEFAULT");
         SHADER_MENU_DEFAULT = new Shader(
                 "shader/menu.vert",
                 "shader/menu.frag"
@@ -351,6 +361,8 @@ public class Engine {
         SHADER_WORLD_STATIC_DEFAULT.setVector3f("camPos", position);
         SHADER_WORLD_STATIC_DEFAULT.setInt("renderDistance", (renderDistance-1) * Chunk.SIZE);
         SHADER_WORLD_STATIC_DEFAULT.setBool("lightingEnabled", lightingEnabled);
+        SHADER_WORLD_STATIC_DEFAULT.setVector2f("iResolution", new Vector2f(windowWidth, windowHeight));
+        SHADER_WORLD_STATIC_DEFAULT.setFloat("iTime", (float) glfwGetTime());
 
         for(Chunk chunk : chunks){
             glBindBuffer(GL_ARRAY_BUFFER, chunk.getVBO());
@@ -376,7 +388,8 @@ public class Engine {
         Shader s = switch (postShaderNum){
             case 0 -> SHADER_POST_NONE;
             case 1 -> SHADER_POST_LITE;
-            default -> SHADER_POST_CINEMATIC;
+            case 2 -> SHADER_POST_CINEMATIC;
+            default -> SHADER_POST_GLICH;
         };
         s.use();
         s.setVector2f("iResolution", new Vector2f(windowWidth, windowHeight));
@@ -441,7 +454,8 @@ public class Engine {
         Shader s = switch (postShaderNum){
             case 0 -> SHADER_POST_NONE;
             case 1 -> SHADER_POST_LITE;
-            default -> SHADER_POST_CINEMATIC;
+            case 2 -> SHADER_POST_CINEMATIC;
+            default -> SHADER_POST_GLICH;
         };
         s.use();
         s.setVector2f("iResolution", new Vector2f(windowWidth, windowHeight));
