@@ -107,60 +107,60 @@ public class Chunk {
                     float tex = cubes[x][y] == Cube.NORMAL_WALL ? 0.0f : 0.3f;
                     if (getIfCubeIsTransparent(x + 1, y, px_pz, px_nz, px_mz, mx_pz, mx_nz, mx_mz, nx_pz, nx_mz)) {
                         vertices.addAll(List.of(
-                                0.5f+xp, -0.5f, -0.5f+yp,  0.0f, 0.0f, tex, AO_PM,
-                                0.5f+xp, -0.5f, 0.5f+yp,  1.0f, 0.0f, tex, AO_PP,
-                                0.5f+xp,  0.5f, 0.5f+yp,  1.0f, 1.0f, tex, AO_PP,
-                                0.5f+xp,  0.5f, 0.5f+yp,  1.0f, 1.0f, tex, AO_PP,
-                                0.5f+xp,  0.5f, -0.5f+yp,  0.0f, 1.0f, tex, AO_PM,
-                                0.5f+xp, -0.5f, -0.5f+yp,  0.0f, 0.0f, tex, AO_PM
+                                1f+xp, -0.5f, 0f+yp, 0.0f, 0.0f, tex, AO_PM,
+                                1f+xp, -0.5f, 1f+yp,  1.0f, 0.0f, tex, AO_PP,
+                                1f+xp,  0.5f, 1f+yp,  1.0f, 1.0f, tex, AO_PP,
+                                1f+xp,  0.5f, 1f+yp,  1.0f, 1.0f, tex, AO_PP,
+                                1f+xp,  0.5f, 0f+yp,  0.0f, 1.0f, tex, AO_PM,
+                                1f+xp, -0.5f, 0f+yp,  0.0f, 0.0f, tex, AO_PM
                         ));
                     }
                     if (getIfCubeIsTransparent(x - 1, y, px_pz, px_nz, px_mz, mx_pz, mx_nz, mx_mz, nx_pz, nx_mz)) {
                         vertices.addAll(List.of(
-                                -0.5f+xp, -0.5f, -0.5f+yp,  0.0f, 0.0f, tex, AO_MM,
-                                -0.5f+xp, -0.5f, 0.5f+yp,  1.0f, 0.0f, tex, AO_MP,
-                                -0.5f+xp,  0.5f, 0.5f+yp,  1.0f, 1.0f, tex, AO_MP,
-                                -0.5f+xp,  0.5f, 0.5f+yp,  1.0f, 1.0f, tex, AO_MP,
-                                -0.5f+xp,  0.5f, -0.5f+yp,  0.0f, 1.0f, tex, AO_MM,
-                                -0.5f+xp, -0.5f, -0.5f+yp,  0.0f, 0.0f, tex, AO_MM
+                                0f+xp, -0.5f, 0f+yp,  0.0f, 0.0f, tex, AO_MM,
+                                0f+xp, -0.5f, 1f+yp,  1.0f, 0.0f, tex, AO_MP,
+                                0f+xp,  0.5f, 1f+yp,  1.0f, 1.0f, tex, AO_MP,
+                                0f+xp,  0.5f, 1f+yp,  1.0f, 1.0f, tex, AO_MP,
+                                0f+xp,  0.5f, 0f+yp,  0.0f, 1.0f, tex, AO_MM,
+                                0f+xp, -0.5f, 0f+yp,  0.0f, 0.0f, tex, AO_MM
                         ));
                     }
                     if (getIfCubeIsTransparent(x, y + 1, px_pz, px_nz, px_mz, mx_pz, mx_nz, mx_mz, nx_pz, nx_mz)) {
                         vertices.addAll(List.of(
-                                -0.5f+xp, -0.5f, 0.5f+yp,  0.0f, 0.0f, tex, AO_MP,
-                                0.5f+xp, -0.5f, 0.5f+yp,  1.0f, 0.0f, tex, AO_PP,
-                                0.5f+xp,  0.5f, 0.5f+yp,  1.0f, 1.0f, tex, AO_PP,
-                                0.5f+xp,  0.5f, 0.5f+yp,  1.0f, 1.0f, tex, AO_PP,
-                                -0.5f+xp,  0.5f, 0.5f+yp,  0.0f, 1.0f, tex, AO_MP,
-                                -0.5f+xp, -0.5f, 0.5f+yp,  0.0f, 0.0f, tex, AO_MP
+                                0f+xp, -0.5f, 1f+yp,  0.0f, 0.0f, tex, AO_MP,
+                                1f+xp, -0.5f, 1f+yp,  1.0f, 0.0f, tex, AO_PP,
+                                1f+xp,  0.5f, 1f+yp,  1.0f, 1.0f, tex, AO_PP,
+                                1f+xp,  0.5f, 1f+yp,  1.0f, 1.0f, tex, AO_PP,
+                                0f+xp,  0.5f, 1f+yp,  0.0f, 1.0f, tex, AO_MP,
+                                0f+xp, -0.5f, 1f+yp,  0.0f, 0.0f, tex, AO_MP
                         ));
                     }
                     if (getIfCubeIsTransparent(x, y - 1, px_pz, px_nz, px_mz, mx_pz, mx_nz, mx_mz, nx_pz, nx_mz)) {
                         vertices.addAll(List.of(
-                                -0.5f+xp, -0.5f, -0.5f+yp,  0.0f, 0.0f, tex, AO_MM,
-                                0.5f+xp, -0.5f, -0.5f+yp,  1.0f, 0.0f, tex, AO_PM,
-                                0.5f+xp,  0.5f, -0.5f+yp,  1.0f, 1.0f, tex, AO_PM,
-                                0.5f+xp,  0.5f, -0.5f+yp,  1.0f, 1.0f, tex, AO_PM,
-                                -0.5f+xp,  0.5f, -0.5f+yp,  0.0f, 1.0f, tex, AO_MM,
-                                -0.5f+xp, -0.5f, -0.5f+yp,  0.0f, 0.0f, tex, AO_MM
+                                0f+xp, -0.5f, 0f+yp,  0.0f, 0.0f, tex, AO_MM,
+                                1f+xp, -0.5f, 0f+yp,  1.0f, 0.0f, tex, AO_PM,
+                                1f+xp,  0.5f, 0f+yp,  1.0f, 1.0f, tex, AO_PM,
+                                1f+xp,  0.5f, 0f+yp,  1.0f, 1.0f, tex, AO_PM,
+                                0f+xp,  0.5f, 0f+yp,  0.0f, 1.0f, tex, AO_MM,
+                                0f+xp, -0.5f, 0f+yp,  0.0f, 0.0f, tex, AO_MM
                         ));
                     }
                 }
                 else if (cubes[x][y] == Cube.NORMAL_HALLWAY) {
                     vertices.addAll(List.of(
-                            -0.5f+xp, -0.5f, -0.5f+yp, 0.0f, 0.0f, 0.2f, AO_MM,
-                            0.5f+xp, -0.5f, -0.5f+yp, 1.0f, 0.0f, 0.2f, AO_PM,
-                            0.5f+xp, -0.5f, 0.5f+yp, 1.0f, 1.0f, 0.2f, AO_PP,
-                            0.5f+xp, -0.5f, 0.5f+yp, 1.0f, 1.0f, 0.2f, AO_PP,
-                            -0.5f+xp, -0.5f, 0.5f+yp, 0.0f, 1.0f, 0.2f, AO_MP,
-                            -0.5f+xp, -0.5f, -0.5f+yp, 0.0f, 0.0f, 0.2f, AO_MM,
+                            0f+xp, -0.5f, 0f+yp, 0.0f, 0.0f, 0.2f, AO_MM,
+                            1f+xp, -0.5f, 0f+yp, 1.0f, 0.0f, 0.2f, AO_PM,
+                            1f+xp, -0.5f, 1f+yp, 1.0f, 1.0f, 0.2f, AO_PP,
+                            1f+xp, -0.5f, 1f+yp, 1.0f, 1.0f, 0.2f, AO_PP,
+                            0f+xp, -0.5f, 1f+yp, 0.0f, 1.0f, 0.2f, AO_MP,
+                            0f+xp, -0.5f, 0f+yp, 0.0f, 0.0f, 0.2f, AO_MM,
 
-                            -0.5f+xp, 0.5f, -0.5f+yp, 0.0f, 0.0f, 0.1f, AO_MM,
-                            0.5f+xp, 0.5f, -0.5f+yp, 1.0f, 0.0f, 0.1f, AO_PM,
-                            0.5f+xp, 0.5f, 0.5f+yp, 1.0f, 1.0f, 0.1f, AO_PP,
-                            0.5f+xp, 0.5f, 0.5f+yp, 1.0f, 1.0f, 0.1f, AO_PP,
-                            -0.5f+xp, 0.5f, 0.5f+yp, 0.0f, 1.0f, 0.1f, AO_MP,
-                            -0.5f+xp, 0.5f, -0.5f+yp, 0.0f, 0.0f, 0.1f, AO_MM
+                            -0f+xp, 0.5f, 0f+yp, 0.0f, 0.0f, 0.1f, AO_MM,
+                            1f+xp, 0.5f, 0f+yp, 1.0f, 0.0f, 0.1f, AO_PM,
+                            1f+xp, 0.5f, 1f+yp, 1.0f, 1.0f, 0.1f, AO_PP,
+                            1f+xp, 0.5f, 1f+yp, 1.0f, 1.0f, 0.1f, AO_PP,
+                            0f+xp, 0.5f, 1f+yp, 0.0f, 1.0f, 0.1f, AO_MP,
+                            0f+xp, 0.5f, 0f+yp, 0.0f, 0.0f, 0.1f, AO_MM
                     ));
                 }
             }

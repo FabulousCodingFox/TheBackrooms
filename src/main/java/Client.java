@@ -120,20 +120,100 @@ public class Client {
     private boolean movePlayer(Vector3f positionVector, Vector3f directionVector){
         final float expandPlayerHitbox = 0.125f;
 
-        final Vector3f nextPosition = new Vector3f(positionVector).add(directionVector).add(0.5f, 0.5f, 0.5f);
+        float playerPositionX = positionVector.x;
+        float playerPositionZ = positionVector.z;
 
-        final Chunk currentChunk = (Chunk) chunks.stream().filter(
-                c -> (int)nextPosition.x >= c.getX() * Chunk.SIZE && (int)nextPosition.x < c.getX() * Chunk.SIZE + Chunk.SIZE
-                && (int)nextPosition.z >= c.getY() * Chunk.SIZE && (int)nextPosition.z < c.getY() * Chunk.SIZE + Chunk.SIZE
+        float targetPositionX = playerPositionX + directionVector.x;
+        float targetPositionZ = playerPositionZ + directionVector.z;
+
+        int targetChunkX = (int) Math.floor(targetPositionX / (float)Chunk.SIZE);
+        int targetChunkZ = (int) Math.floor(targetPositionZ / (float)Chunk.SIZE);
+
+        float targetPositionXChunkCorrected = targetPositionX - targetChunkX * Chunk.SIZE;
+        float targetPositionZChunkCorrected = targetPositionZ - targetChunkZ * Chunk.SIZE;
+
+        Chunk targetChunk = (Chunk) chunks.stream().filter(c -> targetChunkX == c.getX() && targetChunkZ == c.getY()).toArray()[0];
+
+        if(targetChunk.getCube((int) (targetPositionXChunkCorrected), (int) (targetPositionZChunkCorrected)) != Cube.NORMAL_HALLWAY){
+            return false;
+        }
+
+        /*/ Finally, check if the player is within 0.125m of the edge of a solid cell
+        for (int i = -1; i <= 1; i++) {
+            for (int j = -1; j <= 1; j++) {
+                // Skip the current cell
+                if (i == 0 && j == 0) {
+                    continue;
+                }
+
+                float x = targetPositionX + i;
+                float y = targetPositionZ + j;
+
+                int currentChunkX = (int) Math.floor(x / (float)Chunk.SIZE);
+                int currentChunkZ = (int) Math.floor(y / (float)Chunk.SIZE);
+
+                float currentPositionXChunkCorrected = x - currentChunkX * Chunk.SIZE;
+                float currentPositionZChunkCorrected = y - currentChunkZ * Chunk.SIZE;
+
+                Chunk currentChunk = (Chunk) chunks.stream().filter(c -> currentChunkX == c.getX() && currentChunkZ == c.getY()).toArray()[0];
+
+                // Check if the adjacent cell is a solid cell
+                if (currentChunk.getCube((int) currentPositionXChunkCorrected, (int) currentPositionZChunkCorrected) != Cube.NORMAL_HALLWAY) {
+                    // Check the distance between the player and the edge of the solid cell
+                    double distance = Math.sqrt(Math.pow(x - playerPositionX, 2) + Math.pow(y - playerPositionZ, 2));
+                    System.out.println(distance);
+                    if (distance < 0.125f) {
+                        if (i == -1) {
+                            System.out.println("Collision with solid cell on left side");
+                        } else if (i == 1) {
+                            System.out.println("Collision with solid cell on right side");
+                        } else if (j == -1) {
+                            System.out.println("Collision with solid cell on top side");
+                        } else if (j == 1) {
+                            System.out.println("Collision with solid cell on bottom side");
+                        }
+                        return false;
+                    }
+                }
+            }
+        }*/
+
+        positionVector.add(directionVector);
+        return true;
+
+
+
+        /*final Vector3f nextPosition = new Vector3f(positionVector).add(directionVector);
+
+        final Chunk nextChunk = (Chunk) chunks.stream().filter(
+                c -> (int) (nextPosition.x /  Chunk.SIZE) == c.getX() && (int) (playerPosition.z /  Chunk.SIZE) == c.getY()
         ).toArray()[0];
 
-        final boolean collide = currentChunk.getCube((int) (nextPosition.x - currentChunk.getX() * Chunk.SIZE), (int) (nextPosition.z - currentChunk.getY() * Chunk.SIZE)) != Cube.NORMAL_HALLWAY;
+        float cubeX = nextPosition.x + 0.5f - nextChunk.getX() * Chunk.SIZE;
+        float cubeY = nextPosition.z + 0.5f - nextChunk.getY() * Chunk.SIZE;
+
+        boolean collide = false;
+
+        if (nextChunk.getCube((int)cubeX, (int)cubeY) != Cube.NORMAL_HALLWAY) {
+            collide = false;
+        }
+
+        // Check if the target position is too close to a solid block
+        for (int x = (int) (nextPosition.x + 0.5f - 1); x <= nextPosition.x + 0.5f; x++) {
+            for (int y = (int) (nextPosition.z + 0.5f - 1); y <=  nextPosition.z + 0.5f + 1; y++) {
+                if (nextChunk.getCube(x, y) != Cube.NORMAL_HALLWAY && Math.abs(nextPosition.x + 0.5f - x) < 0.125 && Math.abs(targetY - y) < 0.125) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
 
         if(!collide){
             positionVector.add(directionVector);
             return true;
-        }
-        return false;
+        }*/
+
     }
 
     public boolean backrooms(){
