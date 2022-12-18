@@ -34,8 +34,8 @@ public class Client {
     public Client(){
         engine = new Engine(1280,960, "The Backrooms");
 
-        playerPosition = new Vector3f(0, 0, 0);
-        playerPrevPosition = new Vector3f(0, 0, 0);
+        playerPosition = new Vector3f(0.5f, 0, 0.5f);
+        playerPrevPosition = new Vector3f(0.5f, 0, 0.5f);
         playerLookAt = new Vector3f(0, 0, 1);
         yaw = 0d;
         pitch = 0d;
@@ -136,6 +136,53 @@ public class Client {
 
         if(targetChunk.getCube((int) (targetPositionXChunkCorrected), (int) (targetPositionZChunkCorrected)) != Cube.NORMAL_HALLWAY){
             return false;
+        }
+
+
+
+        for (int i = -1; i <= 1; i++) {
+            for (int j = -1; j <= 1; j++) {
+                // Skip the current cell
+                if (i == 0 && j == 0) {
+                    continue;
+                }
+
+                float x = targetPositionX + i;
+                float y = targetPositionZ + j;
+
+                int currentChunkX = (int) Math.floor(x / (float)Chunk.SIZE);
+                int currentChunkZ = (int) Math.floor(y / (float)Chunk.SIZE);
+
+                float currentPositionXChunkCorrected = x - currentChunkX * Chunk.SIZE;
+                float currentPositionZChunkCorrected = y - currentChunkZ * Chunk.SIZE;
+
+                Chunk currentChunk = (Chunk) chunks.stream().filter(c -> currentChunkX == c.getX() && currentChunkZ == c.getY()).toArray()[0];
+
+                // Check if the adjacent cell is a solid cell
+                if (currentChunk.getCube((int) currentPositionXChunkCorrected, (int) currentPositionZChunkCorrected) != Cube.NORMAL_HALLWAY) {
+                    // Check the distance between the player and the edge of the solid cell
+
+                    // -x
+                    if(Math.abs(x - targetPositionX) <= expandPlayerHitbox){
+                        System.out.println("-x");
+                    }
+
+                    // +x
+                    if(Math.abs(x - targetPositionX + 1) <= expandPlayerHitbox){
+                        System.out.println("+x");
+                    }
+
+                    // -z
+                    if(Math.abs(y - targetPositionZ) <= expandPlayerHitbox){
+                        System.out.println("-z");
+                    }
+
+                    // +z
+                    if(Math.abs(y - targetPositionZ + 1) <= expandPlayerHitbox){
+                        System.out.println("+z");
+                    }
+                }
+            }
         }
 
         /*/ Finally, check if the player is within 0.125m of the edge of a solid cell
