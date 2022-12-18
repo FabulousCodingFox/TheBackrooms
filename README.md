@@ -14,6 +14,6 @@ Space: Jump
 # Console commands
 "start": Starts the game<br>
 "exit": Closes the game<br>
-"shader <int>": Changes between shaders (0=None,1=Default,2=Cinematic)<br>
+"shader <int>": Changes between shaders (0=None,1=Default,2=Cinematic,3=Glitch)<br>
 "rd <int>": Changes the render distance<br>
 "light <int>": Toggles the lights (0=Off,1=On)
