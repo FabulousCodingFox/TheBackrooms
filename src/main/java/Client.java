@@ -16,8 +16,11 @@ public class Client {
 
     private final float playerWalkSpeed, playerSprintSpeed, playerTurnSpeed, playerCrouchSpeed;
 
-    private float bobbingSpeed = 0f;
-    private float bobbingOffsetX = 0.0f, bobbingOffsetY = 0.0f;
+    private float bobbingSpeed, bobbingOffsetX, bobbingOffsetY;
+
+    private float jumpTimer, jumpOffset;
+
+    private Vector3f dir;
 
     private Thread chunkThread;
 
@@ -40,6 +43,15 @@ public class Client {
         playerSprintSpeed = playerWalkSpeed * 2f;
         playerTurnSpeed = 25f;
         playerCrouchSpeed = playerWalkSpeed / 2f;
+
+        bobbingSpeed = 0f;
+        bobbingOffsetX = 0f;
+        bobbingOffsetY = 0f;
+
+        jumpTimer = 0f;
+        jumpOffset = 0f;
+
+        dir = new Vector3f(0, 0, 0);
 
         playerCrouchAnim = 0;
 
@@ -163,6 +175,12 @@ public class Client {
             boolean keyCrouch = engine.getIfKeyIsPressed(Key.CROUCH);
             boolean keyJump = engine.getIfKeyIsPressed(Key.JUMP);
 
+            float multiplier = deltaTime;
+            if (keySprint && !keyCrouch) multiplier *= playerSprintSpeed;
+            else if (!keySprint && keyCrouch) multiplier *= playerCrouchSpeed;
+            else if (keySprint && keyCrouch) multiplier *= playerCrouchSpeed;
+            else multiplier *= playerWalkSpeed;
+
             boolean keyTerminal = engine.getIfKeyIsPressed(Key.TERMINAL);
             if(keyTerminal) return false;
 
@@ -173,63 +191,76 @@ public class Client {
             }
             else if (!keyCrouch && playerCrouchAnim<0) {
                 playerCrouchAnim+= 0.3 * (deltaTime/0.2);
+                if(playerCrouchAnim > -0.3 * (deltaTime/0.2)) playerCrouchAnim = 0;
             }
 
-            if(keyWalkForward || keyWalkBackward || keyWalkLeft || keyWalkRight) {
-                float speed = keySprint ? playerSprintSpeed : playerWalkSpeed;
-                float multiplier = deltaTime;
-                if (keySprint && !keyCrouch) multiplier *= playerSprintSpeed;
-                else if (!keySprint && keyCrouch) multiplier *= playerCrouchSpeed;
-                else if (keySprint && keyCrouch) multiplier *= playerCrouchSpeed;
-                else multiplier *= playerWalkSpeed;
+            if(keyJump && jumpTimer == 0 && playerCrouchAnim == 0){
+                jumpTimer = 1.5f * deltaTime;
+            }
 
+            if(jumpTimer > 0){
+                jumpTimer += deltaTime * 1.5f;
+                jumpOffset = (float) (-1.77777 * Math.pow(jumpTimer-0.75d, 2) +1d) * 0.3f;
+                if(jumpTimer >= 1.5f){
+                    jumpTimer = 0;
+                    jumpOffset = 0;
+                }
+            }
+
+            if(jumpTimer > 0){
+                playerPosition = new Vector3f(playerPosition).add(dir);
+            }
+
+            if(jumpTimer == 0 && (keyWalkForward || keyWalkBackward || keyWalkLeft || keyWalkRight)) {
                 Vector3f ns = new Vector3f(playerLookAt.x, 0, playerLookAt.z).mul(keyWalkForward?1:(keyWalkBackward?-1:0));
                 Vector3f ow = new Vector3f(playerLookAt.x, 0, playerLookAt.z).cross(worldUp).mul(keyWalkRight?0.5f:(keyWalkLeft?-0.5f:0));
-                Vector3f dir = ns.add(ow).normalize().mul(multiplier);
+                dir = ns.add(ow).normalize().mul(multiplier);
 
                 playerPosition = new Vector3f(playerPosition).add(dir);
+            } else if (jumpOffset == 0 && !(keyWalkForward || keyWalkBackward || keyWalkLeft || keyWalkRight)) {
+                dir = new Vector3f(0, 0, 0);
             }
 
             //if(keyJump) playerPosition.add(0, 10*deltaTime, 0);
 
             // View Bobbing
+            if(jumpOffset == 0) {
+                float bobbingTransitionSpeed = 0.05f * deltaTime;
 
-            float bobbingTransitionSpeed = 0.05f * deltaTime;
+                if (keyCrouch) {
+                    bobbingSpeed -= bobbingTransitionSpeed;
+                    if (bobbingSpeed < 0) bobbingSpeed = 0f;
+                } else if (keySprint && (keyWalkForward || keyWalkBackward || keyWalkLeft || keyWalkRight)) {
+                    bobbingSpeed += bobbingTransitionSpeed;
+                    if (bobbingSpeed > 0.025f) bobbingSpeed = 0.025f;
+                } else if (keyWalkForward || keyWalkBackward || keyWalkLeft || keyWalkRight) {
+                    if (bobbingSpeed < 0.0125f) bobbingSpeed += bobbingTransitionSpeed;
+                    if (bobbingSpeed > 0.0125f) bobbingSpeed -= bobbingTransitionSpeed;
+                    if (bobbingSpeed + bobbingTransitionSpeed > bobbingSpeed && bobbingSpeed - bobbingTransitionSpeed < bobbingSpeed)
+                        bobbingSpeed = 0.0125f;
+                } else {
+                    bobbingSpeed -= bobbingTransitionSpeed;
+                    if (bobbingSpeed < 0) bobbingSpeed = 0f;
+                }
+                if (bobbingSpeed == 0f) {
+                    bobbingOffsetX = 0;
+                    bobbingOffsetY = 0;
+                }
 
-            if(keyCrouch){
-                bobbingSpeed -= bobbingTransitionSpeed;
-                if(bobbingSpeed < 0) bobbingSpeed = 0f;
-            }
-            else if(keySprint && (keyWalkForward || keyWalkBackward || keyWalkLeft || keyWalkRight)){
-                bobbingSpeed += bobbingTransitionSpeed;
-                if(bobbingSpeed > 0.025f) bobbingSpeed = 0.025f;
-            }
-            else if(keyWalkForward || keyWalkBackward || keyWalkLeft || keyWalkRight){
-                if(bobbingSpeed < 0.0125f) bobbingSpeed += bobbingTransitionSpeed;
-                if(bobbingSpeed > 0.0125f) bobbingSpeed -= bobbingTransitionSpeed;
-                if(bobbingSpeed + bobbingTransitionSpeed > bobbingSpeed && bobbingSpeed - bobbingTransitionSpeed < bobbingSpeed) bobbingSpeed = 0.0125f;
-            }
-            else{
-                bobbingSpeed -= bobbingTransitionSpeed;
-                if(bobbingSpeed < 0) bobbingSpeed = 0f;
-            }
-            if(bobbingSpeed == 0f) {
-                bobbingOffsetX = 0;
-                bobbingOffsetY = 0;
+                bobbingOffsetY += 0.1f;
+                if (bobbingOffsetY > Math.PI * 2) {
+                    bobbingOffsetY -= Math.PI * 2;
+                }
+                bobbingOffsetX += (0.1f / 2);
+                if (bobbingOffsetX > Math.PI * 2) {
+                    bobbingOffsetX -= Math.PI * 2;
+                }
             }
 
-            bobbingOffsetY += 0.1f;
-            if (bobbingOffsetY > Math.PI * 2) {
-                bobbingOffsetY -= Math.PI * 2;
-            }
-            bobbingOffsetX += (0.1f / 2);
-            if (bobbingOffsetX > Math.PI * 2) {
-                bobbingOffsetX -= Math.PI * 2;
-            }
             float bobbingAmountY = (float) Math.sin(bobbingOffsetY) * bobbingSpeed;
             float bobbingAmountX = (float) Math.sin(bobbingOffsetX) * (bobbingSpeed * 0.5f);
 
-            Vector3f camLocation = new Vector3f(playerPosition.x, playerPosition.y + (float) playerCrouchAnim + bobbingAmountY, playerPosition.z);
+            Vector3f camLocation = new Vector3f(playerPosition.x, playerPosition.y + (float) playerCrouchAnim + bobbingAmountY + jumpOffset, playerPosition.z);
             camLocation.add(new Vector3f(playerLookAt).cross(worldUp).mul(bobbingAmountX));
 
             // Render Queue
