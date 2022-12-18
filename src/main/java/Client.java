@@ -2,6 +2,7 @@ import engine.Engine;
 import engine.enums.Key;
 import org.joml.Vector3f;
 import structures.Chunk;
+import structures.Cube;
 
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
@@ -116,6 +117,24 @@ public class Client {
         return true;
     }
 
+    private boolean movePlayer(Vector3f positionVector, Vector3f directionVector){
+        final float expandPlayerHitbox = 0.125f;
+
+        final Vector3f nextPosition = new Vector3f(positionVector).add(directionVector).add(0.5f, 0.5f, 0.5f);
+
+        final Chunk currentChunk = (Chunk) chunks.stream().filter(
+                c -> (int)nextPosition.x >= c.getX() * Chunk.SIZE && (int)nextPosition.x < c.getX() * Chunk.SIZE + Chunk.SIZE
+                && (int)nextPosition.z >= c.getY() * Chunk.SIZE && (int)nextPosition.z < c.getY() * Chunk.SIZE + Chunk.SIZE
+        ).toArray()[0];
+
+        final boolean collide = currentChunk.getCube((int) (nextPosition.x - currentChunk.getX() * Chunk.SIZE), (int) (nextPosition.z - currentChunk.getY() * Chunk.SIZE)) != Cube.NORMAL_HALLWAY;
+
+        if(!collide){
+            positionVector.add(directionVector);
+            return true;
+        }
+        return false;
+    }
 
     public boolean backrooms(){
         boolean running = true;
@@ -209,7 +228,7 @@ public class Client {
             }
 
             if(jumpTimer > 0){
-                playerPosition = new Vector3f(playerPosition).add(dir);
+                movePlayer(playerPosition, dir);
             }
 
             if(jumpTimer == 0 && (keyWalkForward || keyWalkBackward || keyWalkLeft || keyWalkRight)) {
@@ -217,7 +236,7 @@ public class Client {
                 Vector3f ow = new Vector3f(playerLookAt.x, 0, playerLookAt.z).cross(worldUp).mul(keyWalkRight?0.5f:(keyWalkLeft?-0.5f:0));
                 dir = ns.add(ow).normalize().mul(multiplier);
 
-                playerPosition = new Vector3f(playerPosition).add(dir);
+                movePlayer(playerPosition, dir);
             } else if (jumpOffset == 0 && !(keyWalkForward || keyWalkBackward || keyWalkLeft || keyWalkRight)) {
                 dir = new Vector3f(0, 0, 0);
             }
