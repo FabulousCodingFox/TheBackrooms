@@ -187,7 +187,7 @@ public class Client {
 
             // Crouching
 
-            if(keyCrouch && playerCrouchAnim>-0.3){
+            if(jumpTimer == 0 && keyCrouch && playerCrouchAnim>-0.3){
                 playerCrouchAnim-= 0.3 * (deltaTime/0.2);
             }
             else if (!keyCrouch && playerCrouchAnim<0) {
@@ -225,7 +225,7 @@ public class Client {
             //if(keyJump) playerPosition.add(0, 10*deltaTime, 0);
 
             // View Bobbing
-            if(jumpOffset == 0) {
+            if(jumpTimer == 0) {
                 float bobbingTransitionSpeed = 0.05f * deltaTime;
 
                 if (keyCrouch) {

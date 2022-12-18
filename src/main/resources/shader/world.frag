@@ -52,7 +52,7 @@ void main()
             col +=  vec3(v * 0.2+.4, 12.-s*2., .1 + v * 1.) * v * 0.00003;
             s += .025;
         }
-        FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
+        FragColor = vec4(clamp(col, 0.0, 1.0), 1.0) * camDistData;
     }
     else{
         FragColor = vec4(1., 0., 1., 1.);
