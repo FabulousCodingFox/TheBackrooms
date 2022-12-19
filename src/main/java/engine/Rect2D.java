@@ -34,15 +34,22 @@ public class Rect2D {
     }
 
     public boolean doesIntersect(Rect2D other){
-        // if rectangle has area 0, no overlap
-        if (getWidth() == 0 ||getHeight() == 0 || other.getWidth() == 0 || other.getHeight() == 0) return false;
 
-        // If one rectangle is on left side of other
-        if (getX() > other.getX()+other.getWidth() || other.getX() > getX() + getWidth()) return false;
+        double rect1MinX = this.getX();
+        double rect1MaxX = this.getX() + this.getWidth();
+        double rect1MinY = this.getY();
+        double rect1MaxY = this.getY() + this.getHeight();
 
-        // If one rectangle is above other
-        if (getY() + getHeight() > other.getY() || other.getY() + other.getHeight() > getY()) return false;
+        double rect2MinX = other.getX();
+        double rect2MaxX = other.getX() + other.getWidth();
+        double rect2MinY = other.getY();
+        double rect2MaxY = other.getY() + other.getHeight();
 
-        return true;
+        return (rect1MinX <= rect2MaxX && rect1MaxX >= rect2MinX) &&
+                (rect1MinY <= rect2MaxY && rect1MaxY >= rect2MinY);
+    }
+
+    public boolean isInside(float xp, float yp){
+        return ((xp >= getX() && xp <= getX() + getWidth()) && (yp >= getY() && yp <= getY() + getHeight()));
     }
 }

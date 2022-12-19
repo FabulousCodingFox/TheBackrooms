@@ -1,9 +1,12 @@
 import engine.Engine;
+import engine.Rect2D;
 import engine.enums.Key;
 import org.joml.Vector3f;
 import structures.Chunk;
 import structures.Cube;
 
+import java.awt.*;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.stream.Collectors;
@@ -118,7 +121,7 @@ public class Client {
     }
 
     private boolean movePlayer(Vector3f positionVector, Vector3f directionVector){
-        final float expandPlayerHitbox = 0.125f;
+        final float expandPlayerHitbox = 0.0625f;
 
         float playerPositionX = positionVector.x;
         float playerPositionZ = positionVector.z;
@@ -126,20 +129,39 @@ public class Client {
         float targetPositionX = playerPositionX + directionVector.x;
         float targetPositionZ = playerPositionZ + directionVector.z;
 
-        int targetChunkX = (int) Math.floor(targetPositionX / (float)Chunk.SIZE);
-        int targetChunkZ = (int) Math.floor(targetPositionZ / (float)Chunk.SIZE);
+        ArrayList<Rect2D> rect2DS = new ArrayList<>();
+        for (int i = -1; i <= 1; i++) {
+            for (int j = -1; j <= 1; j++) {
+                float x = targetPositionX + i;
+                float y = targetPositionZ + j;
 
-        float targetPositionXChunkCorrected = targetPositionX - targetChunkX * Chunk.SIZE;
-        float targetPositionZChunkCorrected = targetPositionZ - targetChunkZ * Chunk.SIZE;
+                int currentChunkX = (int) Math.floor(x / (float)Chunk.SIZE);
+                int currentChunkZ = (int) Math.floor(y / (float)Chunk.SIZE);
 
-        Chunk targetChunk = (Chunk) chunks.stream().filter(c -> targetChunkX == c.getX() && targetChunkZ == c.getY()).toArray()[0];
+                float currentPositionXChunkCorrected = x - currentChunkX * Chunk.SIZE;
+                float currentPositionZChunkCorrected = y - currentChunkZ * Chunk.SIZE;
 
-        if(targetChunk.getCube((int) (targetPositionXChunkCorrected), (int) (targetPositionZChunkCorrected)) != Cube.NORMAL_HALLWAY){
-            return false;
+                Chunk currentChunk = (Chunk) chunks.stream().filter(c -> currentChunkX == c.getX() && currentChunkZ == c.getY()).toArray()[0];
+
+                if (currentChunk.getCube((int) currentPositionXChunkCorrected, (int) currentPositionZChunkCorrected) != Cube.NORMAL_HALLWAY) {
+                    rect2DS.add(new Rect2D((int) currentPositionXChunkCorrected, (int) currentPositionZChunkCorrected, 1, 1));
+                }
+            }
         }
 
+        Rect2D playerRect = new Rect2D(expandPlayerHitbox + targetPositionX, expandPlayerHitbox + targetPositionZ, expandPlayerHitbox * 2, expandPlayerHitbox * 2);
+
+        for(Rect2D rect2D:rect2DS){
+            if(rect2D.doesIntersect(playerRect)) return false;
+        }
+
+        positionVector.add(directionVector);
+        return true;
 
 
+
+
+        /*
         for (int i = -1; i <= 1; i++) {
             for (int j = -1; j <= 1; j++) {
                 // Skip the current cell
@@ -183,7 +205,7 @@ public class Client {
                     }
                 }
             }
-        }
+        }*/
 
         /*/ Finally, check if the player is within 0.125m of the edge of a solid cell
         for (int i = -1; i <= 1; i++) {
@@ -225,8 +247,7 @@ public class Client {
             }
         }*/
 
-        positionVector.add(directionVector);
-        return true;
+
 
 
 
