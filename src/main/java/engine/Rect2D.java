@@ -10,6 +10,13 @@ public class Rect2D {
         this.h = height;
     }
 
+    public Rect2D(float x, float y, float width, float height){
+        this.x = x;
+        this.y = y;
+        this.w = width;
+        this.h = height;
+    }
+
     public float getX() {
         return x;
     }
