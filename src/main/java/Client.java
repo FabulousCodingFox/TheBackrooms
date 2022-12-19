@@ -121,7 +121,7 @@ public class Client {
     }
 
     private boolean movePlayer(Vector3f positionVector, Vector3f directionVector){
-        final float expandPlayerHitbox = 0.0625f;
+        final float expandPlayerHitbox = 0.125f;
 
         float playerPositionX = positionVector.x;
         float playerPositionZ = positionVector.z;
@@ -132,24 +132,24 @@ public class Client {
         ArrayList<Rect2D> rect2DS = new ArrayList<>();
         for (int i = -1; i <= 1; i++) {
             for (int j = -1; j <= 1; j++) {
-                float x = targetPositionX + i;
-                float y = targetPositionZ + j;
+                float x = targetPositionX + (float)i;
+                float y = targetPositionZ + (float)j;
 
                 int currentChunkX = (int) Math.floor(x / (float)Chunk.SIZE);
                 int currentChunkZ = (int) Math.floor(y / (float)Chunk.SIZE);
 
-                float currentPositionXChunkCorrected = x - currentChunkX * Chunk.SIZE;
-                float currentPositionZChunkCorrected = y - currentChunkZ * Chunk.SIZE;
+                float currentPositionXChunkCorrected = x - currentChunkX * (float)Chunk.SIZE;
+                float currentPositionZChunkCorrected = y - currentChunkZ * (float)Chunk.SIZE;
 
                 Chunk currentChunk = (Chunk) chunks.stream().filter(c -> currentChunkX == c.getX() && currentChunkZ == c.getY()).toArray()[0];
 
                 if (currentChunk.getCube((int) currentPositionXChunkCorrected, (int) currentPositionZChunkCorrected) != Cube.NORMAL_HALLWAY) {
-                    rect2DS.add(new Rect2D((int) currentPositionXChunkCorrected, (int) currentPositionZChunkCorrected, 1, 1));
+                    rect2DS.add(new Rect2D((int) x, (int) y, 1, 1));
                 }
             }
         }
 
-        Rect2D playerRect = new Rect2D(expandPlayerHitbox + targetPositionX, expandPlayerHitbox + targetPositionZ, expandPlayerHitbox * 2, expandPlayerHitbox * 2);
+        Rect2D playerRect = new Rect2D(targetPositionX - expandPlayerHitbox , targetPositionZ - expandPlayerHitbox, expandPlayerHitbox * 2, expandPlayerHitbox * 2);
 
         for(Rect2D rect2D:rect2DS){
             if(rect2D.doesIntersect(playerRect)) return false;
