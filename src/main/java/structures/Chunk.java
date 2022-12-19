@@ -7,6 +7,13 @@ import java.util.Random;
 import static org.lwjgl.opengl.GL46.*;
 
 public class Chunk {
+    private enum Terrain{
+        NORMAL,
+        EMPTY_HALLWAY,
+        SYMMETRICAL,
+        VOID_HOLES
+    }
+
     public static final int SIZE = 10;
 
     private int VBO;
@@ -19,10 +26,14 @@ public class Chunk {
 
     boolean ready = false;
 
+    private final Terrain terrain;
+
     public Chunk(int x, int y) {
         cubes = new Cube[SIZE][SIZE];
         chunkX = x;
         chunkY = y;
+
+        terrain = Terrain.NORMAL;
     }
 
     public int getVBO(){
@@ -34,18 +45,51 @@ public class Chunk {
     }
 
     public void generateTerrain(){
-        Random random = new Random();
+        if(terrain == Terrain.NORMAL){
+            Random random = new Random();
+            for(int x=0; x<SIZE; x++){
+                for(int y=0; y<SIZE; y++){
+                    int num = random.nextInt(1000);
+                    if(num < 200) cubes[x][y] = Cube.NORMAL_WALL;
+                    if(num >= 200) cubes[x][y] = Cube.NORMAL_HALLWAY;
+                    if(num < 1) cubes[x][y] = Cube.EXIT;
+                }
+            }
+        }
+        if(terrain == Terrain.EMPTY_HALLWAY){
+            for(int x=0; x<SIZE; x++){
+                for(int y=0; y<SIZE; y++){
+                    cubes[x][y] = Cube.NORMAL_HALLWAY;
+                }
+            }
+        }
+        if(terrain == Terrain.SYMMETRICAL){
+            for(int x=0; x<SIZE; x++){
+                for(int y=0; y<SIZE; y++){
+                    if(x % 2 == 0 && y % 2 == 0){
+                        cubes[x][y] = Cube.NORMAL_WALL;
+                    }else{
+                        cubes[x][y] = Cube.NORMAL_HALLWAY;
+                    }
+                }
+            }
+        }
+        if(terrain == Terrain.VOID_HOLES){
+            Random random = new Random();
+            for(int x=0; x<SIZE; x++){
+                for(int y=0; y<SIZE; y++){
+                    int num = random.nextInt(100);
+                    if(num < 10) cubes[x][y] = Cube.HOLE_IN_FLOOR;
+                    if(num >= 10) cubes[x][y] = Cube.NORMAL_HALLWAY;
+                }
+            }
+        }
+
         for(int x=0; x<SIZE; x++){
             for(int y=0; y<SIZE; y++){
                 if((chunkX * Chunk.SIZE + x == 0 || chunkX * Chunk.SIZE + x == -1 || chunkX * Chunk.SIZE + x == 1) && (chunkY * Chunk.SIZE + y == 0 || chunkY * Chunk.SIZE + y == -1 || chunkY * Chunk.SIZE + y == 1)){
                     cubes[x][y] = Cube.NORMAL_HALLWAY;
-                    continue;
                 }
-
-                int num = random.nextInt(1000);
-                if(num < 200) cubes[x][y] = Cube.NORMAL_WALL;
-                if(num >= 200) cubes[x][y] = Cube.NORMAL_HALLWAY;
-                if(num < 1) cubes[x][y] = Cube.EXIT;
             }
         }
     }
