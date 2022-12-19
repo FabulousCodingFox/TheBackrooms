@@ -37,6 +37,11 @@ public class Chunk {
         Random random = new Random();
         for(int x=0; x<SIZE; x++){
             for(int y=0; y<SIZE; y++){
+                if((x == 0 || x == -1 || x == 1) && (y == 0 || y == -1 || y == 1)){
+                    cubes[x][y] = Cube.NORMAL_HALLWAY;
+                    continue;
+                }
+
                 int num = random.nextInt(1000);
                 if(num < 200) cubes[x][y] = Cube.NORMAL_WALL;
                 if(num >= 200) cubes[x][y] = Cube.NORMAL_HALLWAY;

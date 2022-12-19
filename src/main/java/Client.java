@@ -404,8 +404,7 @@ public class Client {
                 } else if (keyWalkForward || keyWalkBackward || keyWalkLeft || keyWalkRight) {
                     if (bobbingSpeed < 0.0125f) bobbingSpeed += bobbingTransitionSpeed;
                     if (bobbingSpeed > 0.0125f) bobbingSpeed -= bobbingTransitionSpeed;
-                    if (bobbingSpeed + bobbingTransitionSpeed > bobbingSpeed && bobbingSpeed - bobbingTransitionSpeed < bobbingSpeed)
-                        bobbingSpeed = 0.0125f;
+                    if (Math.abs(bobbingSpeed - 0.0125f) < 0.0125f * deltaTime) bobbingSpeed = 0.0125f;
                 } else {
                     bobbingSpeed -= bobbingTransitionSpeed;
                     if (bobbingSpeed < 0) bobbingSpeed = 0f;
