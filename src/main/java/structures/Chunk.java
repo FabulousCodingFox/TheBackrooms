@@ -37,7 +37,7 @@ public class Chunk {
         Random random = new Random();
         for(int x=0; x<SIZE; x++){
             for(int y=0; y<SIZE; y++){
-                if((x == 0 || x == -1 || x == 1) && (y == 0 || y == -1 || y == 1)){
+                if((chunkX * Chunk.SIZE + x == 0 || chunkX * Chunk.SIZE + x == -1 || chunkX * Chunk.SIZE + x == 1) && (chunkY * Chunk.SIZE + y == 0 || chunkY * Chunk.SIZE + y == -1 || chunkY * Chunk.SIZE + y == 1)){
                     cubes[x][y] = Cube.NORMAL_HALLWAY;
                     continue;
                 }
