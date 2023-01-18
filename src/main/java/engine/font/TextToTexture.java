@@ -31,7 +31,7 @@ public class TextToTexture {
 
     public static void init() throws IOException {
         // Read the atlas
-        BufferedImage atlas = ImageIO.read(new File(Objects.requireNonNull(FileUtils.class.getClassLoader().getResource("textures/font.png")).getPath()));
+        BufferedImage atlas = ImageIO.read(FileUtils.class.getClassLoader().getResourceAsStream("textures/font.png"));
         image = new BufferedImage(TERMINAL_WIDTH * CHAR_WIDTH, TERMINAL_HEIGHT * CHAR_HEIGHT, BufferedImage.TYPE_INT_RGB);
         charMap = new java.util.HashMap<>();
 

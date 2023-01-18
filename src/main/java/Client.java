@@ -1,12 +1,8 @@
 import engine.Engine;
-import engine.Rect2D;
 import engine.enums.Key;
 import org.joml.Vector3f;
 import structures.Chunk;
-import structures.Cube;
 
-import java.awt.*;
-import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.stream.Collectors;
@@ -129,7 +125,7 @@ public class Client {
         float targetPositionX = playerPositionX + directionVector.x;
         float targetPositionZ = playerPositionZ + directionVector.z;
 
-        ArrayList<Rect2D> rect2DS = new ArrayList<>();
+        /*ArrayList<Rect2D> rect2DS = new ArrayList<>();
         for (int i = -1; i <= 1; i++) {
             for (int j = -1; j <= 1; j++) {
                 float x = targetPositionX + (float)i;
@@ -153,7 +149,7 @@ public class Client {
 
         for(Rect2D rect2D:rect2DS){
             if(rect2D.doesIntersect(playerRect)) return false;
-        }
+        }*/
 
         positionVector.add(directionVector);
         return true;
@@ -379,13 +375,21 @@ public class Client {
                 movePlayer(playerPosition, dir);
             }
 
-            if(jumpTimer == 0 && (keyWalkForward || keyWalkBackward || keyWalkLeft || keyWalkRight)) {
-                Vector3f ns = new Vector3f(playerLookAt.x, 0, playerLookAt.z).mul(keyWalkForward?1:(keyWalkBackward?-1:0));
-                Vector3f ow = new Vector3f(playerLookAt.x, 0, playerLookAt.z).cross(worldUp).mul(keyWalkRight?0.5f:(keyWalkLeft?-0.5f:0));
-                dir = ns.add(ow).normalize().mul(multiplier);
+            boolean isWalking = (keyWalkForward || keyWalkBackward || keyWalkLeft || keyWalkRight) || (engine.hasJoystick() && (engine.getJoystickAxes()[0] != 0f || engine.getJoystickAxes()[1] != 0f));
 
+            if(jumpTimer == 0 && isWalking) {
+                if(engine.hasJoystick()){
+                    float[] axes = engine.getJoystickAxes();
+                    Vector3f ns = new Vector3f(playerLookAt.x, 0, playerLookAt.z).mul(axes[0]);
+                    Vector3f ow = new Vector3f(playerLookAt.x, 0, playerLookAt.z).cross(worldUp).mul(axes[1] * 0.5f);
+                    dir = ns.add(ow).normalize().mul(multiplier);
+                }else{
+                    Vector3f ns = new Vector3f(playerLookAt.x, 0, playerLookAt.z).mul(keyWalkForward?1:(keyWalkBackward?-1:0));
+                    Vector3f ow = new Vector3f(playerLookAt.x, 0, playerLookAt.z).cross(worldUp).mul(keyWalkRight?0.5f:(keyWalkLeft?-0.5f:0));
+                    dir = ns.add(ow).normalize().mul(multiplier);
+                }
                 movePlayer(playerPosition, dir);
-            } else if (jumpOffset == 0 && !(keyWalkForward || keyWalkBackward || keyWalkLeft || keyWalkRight)) {
+            } else if (jumpOffset == 0 && !isWalking) {
                 dir = new Vector3f(0, 0, 0);
             }
 
@@ -398,10 +402,10 @@ public class Client {
                 if (keyCrouch) {
                     bobbingSpeed -= bobbingTransitionSpeed;
                     if (bobbingSpeed < 0) bobbingSpeed = 0f;
-                } else if (keySprint && (keyWalkForward || keyWalkBackward || keyWalkLeft || keyWalkRight)) {
+                } else if (keySprint && isWalking) {
                     bobbingSpeed += bobbingTransitionSpeed;
                     if (bobbingSpeed > 0.025f) bobbingSpeed = 0.025f;
-                } else if (keyWalkForward || keyWalkBackward || keyWalkLeft || keyWalkRight) {
+                } else if (isWalking) {
                     if (bobbingSpeed < 0.0125f) bobbingSpeed += bobbingTransitionSpeed;
                     if (bobbingSpeed > 0.0125f) bobbingSpeed -= bobbingTransitionSpeed;
                     if (Math.abs(bobbingSpeed - 0.0125f) < 0.0125f * deltaTime) bobbingSpeed = 0.0125f;

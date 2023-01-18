@@ -5,29 +5,35 @@ import engine.font.TextToTexture;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
-import structures.Chunk;
-import utils.Log;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryStack;
+import structures.Chunk;
+import utils.Log;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.util.ArrayList;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL46.*;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
-
 public class Engine {
     private final long window;
+
+    private boolean sprintToggle = false;
+    private boolean crouchToggle = false;
+    private boolean wasSprintPressed = false;
+    private boolean wasCrouchPressed = false;
+    private boolean wasHatPressed = false;
+
+    private int gamepad;
     private int windowWidth, windowHeight;
 
     private final Matrix4f modelMatrix;
@@ -63,6 +69,8 @@ public class Engine {
 
         this.deltaTime = 0.0f;
 
+        gamepad = -1;
+
         //////////////////////////////////////////////////////////////////////////////////////
 
         Log.init();
@@ -78,6 +86,7 @@ public class Engine {
             throw new IllegalStateException("Unable to initialize GLFW");
         }
         glfwDefaultWindowHints();
+        glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
         window = glfwCreateWindow(windowWidth, windowHeight, windowTitle, NULL, NULL);
@@ -92,6 +101,17 @@ public class Engine {
         mouseOffX = 0d;
         mouseOffY = 0d;
 
+        /////////////////////////////////////////////////////////////////////////////////////
+
+        System.out.println(glfwGetJoystickName(GLFW_JOYSTICK_1));
+        System.out.println(glfwGetJoystickName(GLFW_JOYSTICK_2));
+        System.out.println(glfwGetJoystickName(GLFW_JOYSTICK_3));
+
+        if(glfwJoystickPresent(GLFW_JOYSTICK_1)) {
+            System.out.println("Controller detected");
+            gamepad = GLFW_JOYSTICK_1;
+        }
+
         //////////////////////////////////////////////////////////////////////////////////////
 
         Log.info("Setting GLFW window callbacks...");
@@ -103,15 +123,14 @@ public class Engine {
 
             // Resize Framebuffer
             glBindFramebuffer(GL_FRAMEBUFFER, FRAMEBUFFER);
-
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, FRAMEBUFFER_COLORBUFFER);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, windowWidth, windowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, FRAMEBUFFER_COLORBUFFER, 0);
             glBindRenderbuffer(GL_RENDERBUFFER, FRAMEBUFFER_RENDERBUFFER1);
-            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, windowWidth, windowHeight);
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, FRAMEBUFFER_RENDERBUFFER1);
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glBindTexture(GL_TEXTURE_2D, 0);
@@ -331,7 +350,8 @@ public class Engine {
     }
 
     public boolean render(ArrayList<Chunk> chunks, Vector3f position, Vector3f direction, int renderDistance){
-        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        final boolean DRAW_LINES = false;
+        final boolean ENABLE_RENDERBUFFER = true;
 
         if(glfwWindowShouldClose(window)) return false;
 
@@ -342,7 +362,8 @@ public class Engine {
         // First Pass
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        glBindFramebuffer(GL_FRAMEBUFFER, FRAMEBUFFER);
+        if(ENABLE_RENDERBUFFER) glBindFramebuffer(GL_FRAMEBUFFER, FRAMEBUFFER);
+        if(DRAW_LINES) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glEnable(GL_DEPTH_TEST);
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -380,25 +401,27 @@ public class Engine {
         // Second Pass
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
-        glDisable(GL_DEPTH_TEST);
-        glClearColor(0.0f, 1.0f, 1.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        if(ENABLE_RENDERBUFFER) {
+            glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
+            glDisable(GL_DEPTH_TEST);
+            glClearColor(0.0f, 1.0f, 1.0f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT);
 
-        Shader s = switch (postShaderNum){
-            case 0 -> SHADER_POST_NONE;
-            case 1 -> SHADER_POST_LITE;
-            case 2 -> SHADER_POST_CINEMATIC;
-            default -> SHADER_POST_GLICH;
-        };
-        s.use();
-        s.setVector2f("iResolution", new Vector2f(windowWidth, windowHeight));
-        s.setFloat("iTime", (float) glfwGetTime());
-        glBindVertexArray(VAO_POST_QUAD);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, FRAMEBUFFER_COLORBUFFER);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-        glBindVertexArray(0);
+            Shader s = switch (postShaderNum) {
+                case 0 -> SHADER_POST_NONE;
+                case 1 -> SHADER_POST_LITE;
+                case 2 -> SHADER_POST_CINEMATIC;
+                default -> SHADER_POST_GLICH;
+            };
+            s.use();
+            s.setVector2f("iResolution", new Vector2f(windowWidth, windowHeight));
+            s.setFloat("iTime", (float) glfwGetTime());
+            glBindVertexArray(VAO_POST_QUAD);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, FRAMEBUFFER_COLORBUFFER);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+            glBindVertexArray(0);
+        }
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         double[] a = new double[1];
@@ -416,6 +439,42 @@ public class Engine {
 
     public boolean renderTerminal(String text){
         if(glfwWindowShouldClose(window)) return false;
+
+        if(gamepad != -1){
+            ByteBuffer pressedButtons = glfwGetJoystickButtons(gamepad);
+            int hats = 0;
+            if(pressedButtons.getInt(3) == GLFW_PRESS){
+                typedText+="start\n";
+            }
+            if(pressedButtons.getInt(4) == GLFW_PRESS){
+                typedText+="exit\n";
+            }
+            if(pressedButtons.getInt(16) == GLFW_PRESS && !wasHatPressed){
+                typedText+="shader 0\n";
+                wasHatPressed = true;
+            }
+            if(pressedButtons.getInt(17) == GLFW_PRESS && !wasHatPressed) {
+                typedText+="shader 1\n";
+                wasHatPressed = true;
+            }
+            if(pressedButtons.getInt(18) == GLFW_PRESS && !wasHatPressed) {
+                typedText+="shader 2\n";
+                wasHatPressed = true;
+            }
+            if(pressedButtons.getInt(19) == GLFW_PRESS && !wasHatPressed) {
+                typedText+="shader 3\n";
+                wasHatPressed = true;
+            }
+
+            if(pressedButtons.getInt(16) != GLFW_PRESS &&
+                pressedButtons.getInt(17) != GLFW_PRESS &&
+                pressedButtons.getInt(18) != GLFW_PRESS &&
+                pressedButtons.getInt(19) != GLFW_PRESS
+            ){
+                wasHatPressed = false;
+            }
+        }
+
 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // First Pass
@@ -487,25 +546,73 @@ public class Engine {
         glfwTerminate();
     }
 
+    private float zeroBelowThreshold(float value){
+        if(Math.abs(value) < 0.2f) return 0f;
+        return value;
+    }
+
     public double getMouseMoveX(){
+        if(gamepad != -1){
+            return zeroBelowThreshold(glfwGetJoystickAxes(gamepad).get(2)) * 5;
+        }
         return mouseOffX;
     }
 
     public double getMouseMoveY(){
+        if(gamepad != -1){
+            return zeroBelowThreshold(glfwGetJoystickAxes(gamepad).get(3)) * 5;
+        }
         return mouseOffY;
     }
 
+    public boolean hasJoystick(){
+        return gamepad != -1;
+    }
+
+    public float[] getJoystickAxes(){
+        FloatBuffer axes = glfwGetJoystickAxes(gamepad);
+        System.out.println(zeroBelowThreshold(-axes.get(1)));
+        return new float[]{
+                zeroBelowThreshold(-axes.get(1)),
+                zeroBelowThreshold(axes.get(0))
+        };
+    }
+
     public boolean getIfKeyIsPressed(Key key){
-        if(key == Key.WALK_FORWARD) return glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS;
-        if(key == Key.WALK_BACKWARD) return glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS;
-        if(key == Key.WALK_LEFT) return glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS;
-        if(key == Key.WALK_RIGHT) return glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS;
-        if(key == Key.SPRINT) return glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS;
-        if(key == Key.CROUCH) return glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS;
-        if(key == Key.TERMINAL) return glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS;
-        if(key == Key.ENTER) return glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS;
-        if(key == Key.JUMP) return glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS;
-        return false;
+        if(gamepad != -1){
+            ByteBuffer pressedButtons = glfwGetJoystickButtons(gamepad);
+            if(pressedButtons.getInt(14) == GLFW_PRESS && !wasSprintPressed){
+                sprintToggle = !sprintToggle;
+                wasSprintPressed = true;
+            }
+            if(pressedButtons.getInt(14) != GLFW_PRESS && wasSprintPressed){
+                wasSprintPressed = false;
+            }
+            if(pressedButtons.getInt(15) == GLFW_PRESS && !wasCrouchPressed){
+                crouchToggle = !crouchToggle;
+                wasCrouchPressed = true;
+            }
+            if(pressedButtons.getInt(15) != GLFW_PRESS && wasCrouchPressed){
+                wasCrouchPressed = false;
+            }
+            if(key == Key.SPRINT) return sprintToggle;
+            if(key == Key.CROUCH) return crouchToggle;
+            if(key == Key.TERMINAL) return pressedButtons.getInt(11) == GLFW_PRESS || pressedButtons.getInt(12) == GLFW_PRESS;
+            if(key == Key.ENTER) return pressedButtons.getInt(7) == GLFW_PRESS;
+            if(key == Key.JUMP) return pressedButtons.getInt(3) == GLFW_PRESS;
+            return false;
+        }else{
+            if(key == Key.WALK_FORWARD) return glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS;
+            if(key == Key.WALK_BACKWARD) return glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS;
+            if(key == Key.WALK_LEFT) return glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS;
+            if(key == Key.WALK_RIGHT) return glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS;
+            if(key == Key.SPRINT) return glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS;
+            if(key == Key.CROUCH) return glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS;
+            if(key == Key.TERMINAL) return glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS;
+            if(key == Key.ENTER) return glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS;
+            if(key == Key.JUMP) return glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS ;
+            return false;
+        }
     }
 
     public float getFrameTime(){
